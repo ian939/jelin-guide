@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { AddressSearchInput } from '@/components/AddressSearchInput'
 import { Header } from '@/components/Header'
 import { RequireAuth } from '@/components/RequireAuth'
 import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
@@ -85,7 +86,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
             </div>
             <div>
               <label htmlFor="address">주소 *</label>
-              <input id="address" value={address} onChange={e => setAddress(e.target.value)} required />
+              <AddressSearchInput id="address" value={address} onChange={setAddress} required />
             </div>
             <div>
               <label htmlFor="category">카테고리</label>

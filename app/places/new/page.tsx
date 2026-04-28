@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { AddressSearchInput } from '@/components/AddressSearchInput'
 import { Header } from '@/components/Header'
 import { RequireAuth } from '@/components/RequireAuth'
 import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
@@ -78,16 +79,7 @@ function NewPlaceForm() {
           </div>
           <div>
             <label htmlFor="address">주소 *</label>
-            <input
-              id="address"
-              value={address}
-              onChange={e => setAddress(e.target.value)}
-              placeholder="예: 서울시 중구 세종대로 110"
-              required
-            />
-            <p className="mt-1 text-xs text-zinc-500">
-              주소를 입력하면 좌표가 자동으로 변환됩니다.
-            </p>
+            <AddressSearchInput id="address" value={address} onChange={setAddress} required />
           </div>
           <div>
             <label htmlFor="category">카테고리 *</label>
