@@ -12,6 +12,7 @@ export async function GET(req: Request) {
   const parsed = placeFilterSchema.safeParse({
     q: url.searchParams.get('q') ?? undefined,
     categories: rawCategories.length ? rawCategories : undefined,
+    mealType: url.searchParams.get('mealType') ?? undefined,
     minAvg: url.searchParams.get('minAvg') ?? undefined,
     minReviews: url.searchParams.get('minReviews') ?? undefined,
     sort: url.searchParams.get('sort') ?? undefined,
@@ -21,10 +22,11 @@ export async function GET(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'VALIDATION', issues: parsed.error.flatten() }, { status: 400 })
   }
-  const { q, categories, minAvg, minReviews, sort, page = 1, pageSize = 20 } = parsed.data
+  const { q, categories, mealType, minAvg, minReviews, sort, page = 1, pageSize = 20 } = parsed.data
 
   const where: Prisma.PlaceWhereInput = { isHidden: false }
   if (categories?.length) where.category = { in: categories }
+  if (mealType) where.mealType = mealType
   if (q) {
     where.OR = [
       { name: { contains: q, mode: 'insensitive' } },
@@ -63,6 +65,7 @@ export async function GET(req: Request) {
       lat: p.lat,
       lng: p.lng,
       category: p.category,
+      mealType: p.mealType,
       zeropaySelfReport: p.zeropaySelfReport,
       menuMemo: p.menuMemo,
       priceMemo: p.priceMemo,
@@ -73,8 +76,13 @@ export async function GET(req: Request) {
 
   if (typeof minAvg === 'number') enriched = enriched.filter(p => (p.avgScore ?? 0) >= minAvg)
   if (typeof minReviews === 'number') enriched = enriched.filter(p => p.reviewCount >= minReviews)
-  if (sort === 'popular')
+  if (sort === 'popular') {
     enriched.sort((a, b) => (b.reviewCount - a.reviewCount) || ((b.avgScore ?? 0) - (a.avgScore ?? 0)))
+  } else if (sort === 'review') {
+    enriched.sort((a, b) => b.reviewCount - a.reviewCount)
+  } else if (sort === 'rating') {
+    enriched.sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0))
+  }
 
   return NextResponse.json({ places: enriched, page, pageSize })
 }
@@ -126,6 +134,7 @@ export async function POST(req: Request) {
         lat,
         lng,
         category: data.category,
+        mealType: data.mealType,
         zeropaySelfReport: data.zeropaySelfReport,
         menuMemo: data.menuMemo || null,
         priceMemo: data.priceMemo || null,
@@ -141,6 +150,7 @@ export async function POST(req: Request) {
         lat: created.lat,
         lng: created.lng,
         category: created.category,
+        mealType: created.mealType,
         zeropaySelfReport: created.zeropaySelfReport,
         menuMemo: created.menuMemo,
         priceMemo: created.priceMemo,

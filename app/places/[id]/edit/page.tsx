@@ -5,7 +5,14 @@ import { useEffect, useState } from 'react'
 import { AddressSearchInput } from '@/components/AddressSearchInput'
 import { Header } from '@/components/Header'
 import { RequireAuth } from '@/components/RequireAuth'
-import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
+import {
+  CATEGORIES,
+  CATEGORY_LABEL,
+  MEAL_TYPES,
+  MEAL_TYPE_LABEL,
+  type CategoryCode,
+  type MealTypeCode,
+} from '@/lib/validators/place'
 
 export default function EditPlacePage(props: { params: { id: string } }) {
   return (
@@ -23,6 +30,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
   const [category, setCategory] = useState<CategoryCode>('KOREAN')
+  const [mealType, setMealType] = useState<MealTypeCode>('LUNCH')
   const [zeropaySelfReport, setZeropay] = useState(true)
   const [menuMemo, setMenuMemo] = useState('')
   const [priceMemo, setPriceMemo] = useState('')
@@ -36,6 +44,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
         setName(place.name)
         setAddress(place.address)
         setCategory(place.category)
+        setMealType(place.mealType ?? 'LUNCH')
         setZeropay(place.zeropaySelfReport)
         setMenuMemo(place.menuMemo ?? '')
         setPriceMemo(place.priceMemo ?? '')
@@ -51,7 +60,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
     const res = await fetch(`/api/places/${params.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, address, category, zeropaySelfReport, menuMemo, priceMemo, recommendReason }),
+      body: JSON.stringify({ name, address, category, mealType, zeropaySelfReport, menuMemo, priceMemo, recommendReason }),
     })
     setSubmitting(false)
     if (res.status === 401) {
@@ -89,6 +98,25 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
             <div>
               <label htmlFor="address">주소 *</label>
               <AddressSearchInput id="address" value={address} onChange={setAddress} required />
+            </div>
+            <div>
+              <label>용도</label>
+              <div className="grid grid-cols-3 gap-2">
+                {MEAL_TYPES.map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setMealType(t)}
+                    className={`h-11 rounded-xl text-sm font-medium transition ${
+                      mealType === t
+                        ? 'bg-accent text-white'
+                        : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                    }`}
+                  >
+                    {MEAL_TYPE_LABEL[t]}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label htmlFor="category">카테고리</label>

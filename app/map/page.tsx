@@ -7,7 +7,11 @@ import { NaverMap, type MapMarker } from '@/components/NaverMap'
 import { Stars } from '@/components/Stars'
 import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
 
-type ListItem = MapMarker & {
+type ListItem = {
+  id: string
+  name: string
+  lat: number
+  lng: number
   category: CategoryCode
   reviewCount: number
   avgScore: number | null
@@ -40,7 +44,19 @@ export default function MapPage() {
       })
   }, [selected])
 
-  const markers = useMemo(() => items.map(({ id, name, lat, lng }) => ({ id, name, lat, lng })), [items])
+  const markers: MapMarker[] = useMemo(
+    () =>
+      items.map(({ id, name, lat, lng, category, avgScore, reviewCount }) => ({
+        id,
+        name,
+        lat,
+        lng,
+        category: CATEGORY_LABEL[category],
+        avgScore,
+        reviewCount,
+      })),
+    [items]
+  )
 
   function toggle(c: CategoryCode) {
     const next = new Set(selected)

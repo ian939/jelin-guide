@@ -6,7 +6,7 @@ import { ZeropayVoteButtons } from '@/components/ZeropayVoteButtons'
 import { ReportButton } from '@/components/ReportButton'
 import { prisma } from '@/lib/db'
 import { getSessionUser } from '@/lib/session'
-import { CATEGORY_LABEL } from '@/lib/validators/place'
+import { CATEGORY_LABEL, MEAL_TYPE_LABEL } from '@/lib/validators/place'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,13 +66,13 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
       <main className="px-5 pb-12">
         <div className="mt-4 space-y-2">
           <p className="text-xs text-zinc-500">
-            {CATEGORY_LABEL[place.category]} · 추천 by {place.createdBy.nickname}
+            {MEAL_TYPE_LABEL[place.mealType]} · {CATEGORY_LABEL[place.category]} · 추천 by {place.createdBy.nickname}
           </p>
           <h1 className="text-xl font-bold">{place.name}</h1>
           <div className="flex items-start gap-2">
             <p className="flex-1 text-sm text-zinc-600">{place.address}</p>
             <a
-              href={`https://map.naver.com/p/search/${encodeURIComponent(place.name + ' ' + place.address)}`}
+              href={`https://map.naver.com/p/search/${encodeURIComponent(place.address)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"

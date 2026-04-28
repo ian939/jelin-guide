@@ -8,6 +8,7 @@ const MESSAGES: Record<string, string> = {
   reviewed: '🙌 리뷰 등록 완료! 다른 분들도 참고할 수 있게 됐어요.',
   edited: '✅ 수정 사항이 반영됐어요.',
   rolledback: '↩️ 이전 버전으로 되돌렸어요.',
+  proposed: '🙏 의견 감사합니다! 다음 업데이트에 반영하겠습니다.',
 }
 
 /**

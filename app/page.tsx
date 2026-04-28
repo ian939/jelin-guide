@@ -3,7 +3,7 @@ import { Header } from '@/components/Header'
 import { PlaceCard, type PlaceListItem } from '@/components/PlaceCard'
 import { Stars } from '@/components/Stars'
 import { prisma } from '@/lib/db'
-import { getMonthlyJury, getHallOfFame, getProposalRanking } from '@/lib/ranking'
+import { getMonthlyJury, getProposalRanking } from '@/lib/ranking'
 
 const BOOTSTRAP_PLACE_THRESHOLD = 5
 const BOOTSTRAP_REVIEW_THRESHOLD = 10
@@ -50,10 +50,9 @@ function BootstrapHome({ placeCount }: { placeCount: number }) {
 }
 
 async function CurationHome() {
-  const [topPlaces, jury, hall, proposers] = await Promise.all([
+  const [topPlaces, jury, proposers] = await Promise.all([
     fetchTopPlaces(),
     getMonthlyJury(3),
-    getHallOfFame(3),
     getProposalRanking(3),
   ])
 
@@ -69,58 +68,61 @@ async function CurationHome() {
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 px-1 text-base font-bold">👑 이달의 심사위원</h2>
-        <ol className="card divide-y divide-zinc-100">
-          {jury.length === 0 ? (
-            <li className="py-3 text-sm text-zinc-500">이번 달 리뷰 활동이 아직 없습니다.</li>
-          ) : (
-            jury.map((u, i) => (
-              <li key={u.userId} className="flex items-center justify-between py-3 text-sm">
-                <span>
-                  <span className="mr-2 font-semibold">{i + 1}위</span>
-                  {u.nickname}
-                </span>
-                <span className="text-zinc-500">리뷰 {u.count}</span>
-              </li>
-            ))
-          )}
-        </ol>
+        <h2 className="mb-3 px-1 text-base font-bold">랭킹</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <RankingCard
+            title="🔥 추천 랭킹"
+            empty="아직 추천 활동이 없어요."
+            rows={proposers}
+            unit="추천"
+          />
+          <RankingCard
+            title="👑 심사 랭킹"
+            empty="이번 달 리뷰 활동이 아직 없어요."
+            rows={jury}
+            unit="리뷰"
+          />
+        </div>
+        <Link href="/ranking" className="mt-3 block text-center text-sm text-zinc-500 underline">
+          전체 랭킹 보기
+        </Link>
       </section>
-
-      <section className="mt-8">
-        <h2 className="mb-3 px-1 text-base font-bold">🌟 명예의 전당</h2>
-        <ol className="card divide-y divide-zinc-100">
-          {hall.map((u, i) => (
-            <li key={u.userId} className="flex items-center justify-between py-3 text-sm">
-              <span>
-                <span className="mr-2 font-semibold">{i + 1}위</span>
-                {u.nickname}
-              </span>
-              <span className="text-zinc-500">누적 리뷰 {u.count}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="mb-3 px-1 text-base font-bold">🔥 추천 랭킹</h2>
-        <ol className="card divide-y divide-zinc-100">
-          {proposers.map((u, i) => (
-            <li key={u.userId} className="flex items-center justify-between py-3 text-sm">
-              <span>
-                <span className="mr-2 font-semibold">{i + 1}위</span>
-                {u.nickname}
-              </span>
-              <span className="text-zinc-500">추천 {u.count}</span>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <Link href="/ranking" className="mt-6 block text-center text-sm text-zinc-500 underline">
-        전체 랭킹 보기
-      </Link>
     </main>
+  )
+}
+
+function RankingCard({
+  title,
+  empty,
+  rows,
+  unit,
+}: {
+  title: string
+  empty: string
+  rows: { userId: string; nickname: string; count: number }[]
+  unit: string
+}) {
+  return (
+    <div className="card">
+      <h3 className="mb-2 text-sm font-bold">{title}</h3>
+      {rows.length === 0 ? (
+        <p className="text-xs text-zinc-500">{empty}</p>
+      ) : (
+        <ol className="space-y-2 text-xs">
+          {rows.map((r, i) => (
+            <li key={r.userId} className="flex items-center justify-between">
+              <span className="truncate">
+                <span className="mr-1 font-semibold">{i + 1}</span>
+                {r.nickname}
+              </span>
+              <span className="shrink-0 text-zinc-500">
+                {unit} {r.count}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   )
 }
 

@@ -6,7 +6,14 @@ import { Header } from '@/components/Header'
 import { MiniMap } from '@/components/MiniMap'
 import { PlaceKeywordSearch, type SearchHit } from '@/components/PlaceKeywordSearch'
 import { RequireAuth } from '@/components/RequireAuth'
-import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
+import {
+  CATEGORIES,
+  CATEGORY_LABEL,
+  MEAL_TYPES,
+  MEAL_TYPE_LABEL,
+  type CategoryCode,
+  type MealTypeCode,
+} from '@/lib/validators/place'
 
 export default function NewPlacePage() {
   return (
@@ -25,6 +32,7 @@ function NewPlaceForm() {
   const [lat, setLat] = useState<number | null>(null)
   const [lng, setLng] = useState<number | null>(null)
   const [category, setCategory] = useState<CategoryCode>('KOREAN')
+  const [mealType, setMealType] = useState<MealTypeCode>('LUNCH')
   const [zeropaySelfReport, setZeropay] = useState(true)
   const [menuMemo, setMenuMemo] = useState('')
   const [priceMemo, setPriceMemo] = useState('')
@@ -69,6 +77,7 @@ function NewPlaceForm() {
         name,
         address,
         category,
+        mealType,
         zeropaySelfReport,
         menuMemo,
         priceMemo,
@@ -148,6 +157,25 @@ function NewPlaceForm() {
                   </p>
                 </div>
               ) : null}
+              <div>
+                <label>용도 *</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {MEAL_TYPES.map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setMealType(t)}
+                      className={`h-11 rounded-xl text-sm font-medium transition ${
+                        mealType === t
+                          ? 'bg-accent text-white'
+                          : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                      }`}
+                    >
+                      {MEAL_TYPE_LABEL[t]}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div>
                 <label htmlFor="category">카테고리 *</label>
                 <select

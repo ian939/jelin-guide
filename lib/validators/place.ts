@@ -23,10 +23,19 @@ export const CATEGORY_LABEL: Record<CategoryCode, string> = {
   ETC: '기타',
 }
 
+export const MEAL_TYPES = ['LUNCH', 'DINNER', 'OTHER'] as const
+export type MealTypeCode = (typeof MEAL_TYPES)[number]
+export const MEAL_TYPE_LABEL: Record<MealTypeCode, string> = {
+  LUNCH: '점심',
+  DINNER: '회식',
+  OTHER: '기타',
+}
+
 export const placeSubmitSchema = z.object({
   name: z.string().trim().min(1, '상호를 입력하세요.').max(80),
   address: z.string().trim().min(2, '주소를 입력하세요.').max(200),
   category: z.enum(CATEGORIES),
+  mealType: z.enum(MEAL_TYPES).default('LUNCH'),
   zeropaySelfReport: z.boolean(),
   menuMemo: z.string().trim().max(120).optional().or(z.literal('')),
   priceMemo: z.string().trim().max(60).optional().or(z.literal('')),
@@ -41,9 +50,10 @@ export type PlaceSubmit = z.infer<typeof placeSubmitSchema>
 export const placeFilterSchema = z.object({
   q: z.string().optional(),
   categories: z.array(z.enum(CATEGORIES)).optional(),
+  mealType: z.enum(MEAL_TYPES).optional(),
   minAvg: z.coerce.number().min(0).max(5).optional(),
   minReviews: z.coerce.number().int().min(0).optional(),
-  sort: z.enum(['popular', 'recent', 'distance']).optional(),
+  sort: z.enum(['popular', 'recent', 'distance', 'review', 'rating']).optional(),
   bbox: z
     .object({
       minLat: z.number(),

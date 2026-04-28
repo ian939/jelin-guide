@@ -29,6 +29,12 @@ enum Category {
   ETC
 }
 
+enum MealType {
+  LUNCH  // 점심
+  DINNER // 회식
+  OTHER  // 기타
+}
+
 enum ReportTargetType {
   REVIEW
   PLACE
@@ -124,6 +130,7 @@ model Place {
   lng     Float
 
   category          Category
+  mealType          MealType  @default(LUNCH) // 용도: 점심/회식/기타
   zeropaySelfReport Boolean // 등록·수정 시 제출자가 표기한 자가신고 (현재 활성)
   menuMemo          String? // 대표 메뉴
   priceMemo         String? // 가격대
@@ -143,6 +150,7 @@ model Place {
   zeropayVotes ZeropayVote[]
 
   @@index([category])
+  @@index([mealType])
   @@index([lat, lng]) // 지도 viewport bbox 쿼리
   @@index([isHidden])
   @@index([createdById])
@@ -160,6 +168,7 @@ model PlaceRevision {
   lat               Float
   lng               Float
   category          Category
+  mealType          MealType  @default(LUNCH)
   zeropaySelfReport Boolean
   menuMemo          String?
   priceMemo         String?

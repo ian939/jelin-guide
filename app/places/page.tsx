@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { Header } from '@/components/Header'
+import { MealTypeTabs } from '@/components/MealTypeTabs'
 import { PlaceCard, type PlaceListItem } from '@/components/PlaceCard'
 import { PlaceFilters } from '@/components/PlaceFilters'
 import { prisma } from '@/lib/db'
-import { CATEGORIES, type CategoryCode } from '@/lib/validators/place'
+import { CATEGORIES, MEAL_TYPES, type CategoryCode, type MealTypeCode } from '@/lib/validators/place'
 
 type SP = { [k: string]: string | string[] | undefined }
 
@@ -17,8 +18,12 @@ export default async function PlacesPage({ searchParams }: { searchParams: SP })
   const minAvg = searchParams.minAvg ? Number(searchParams.minAvg) : undefined
   const minReviews = searchParams.minReviews ? Number(searchParams.minReviews) : undefined
   const sort = (searchParams.sort as string | undefined) ?? 'recent'
+  const mealParam = searchParams.mealType as string | undefined
+  const mealType: MealTypeCode = MEAL_TYPES.includes(mealParam as MealTypeCode)
+    ? (mealParam as MealTypeCode)
+    : 'LUNCH'
 
-  const where: any = { isHidden: false }
+  const where: any = { isHidden: false, mealType }
   if (cats.length) where.category = { in: cats }
   if (q) {
     where.OR = [
@@ -58,12 +63,18 @@ export default async function PlacesPage({ searchParams }: { searchParams: SP })
   })
   if (typeof minAvg === 'number') items = items.filter(p => (p.avgScore ?? 0) >= minAvg)
   if (typeof minReviews === 'number') items = items.filter(p => p.reviewCount >= minReviews)
-  if (sort === 'popular')
+  if (sort === 'popular') {
     items.sort((a, b) => (b.reviewCount - a.reviewCount) || ((b.avgScore ?? 0) - (a.avgScore ?? 0)))
+  } else if (sort === 'review') {
+    items.sort((a, b) => b.reviewCount - a.reviewCount)
+  } else if (sort === 'rating') {
+    items.sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0))
+  }
 
   return (
     <>
-      <Header title="가맹점" />
+      <Header />
+      <MealTypeTabs />
       <PlaceFilters />
       <main className="px-4 pb-24">
         {items.length === 0 ? (

@@ -148,11 +148,12 @@ test('지도 페이지 — 마커·SK일렉링크 리센터·추천 FAB', async 
   expect(reactErrors, `React 런타임 에러:\n${reactErrors.join('\n')}`).toEqual([])
 })
 
-test('랭킹 페이지 — 보드 3개 노출', async ({ page }) => {
+test('랭킹 페이지 — 보드 2개 (추천·심사) 노출', async ({ page }) => {
   await page.goto('/ranking')
-  await expect(page.getByRole('heading', { name: /이달의 심사위원/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /명예의 전당/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: /추천 랭킹/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /심사 랭킹/ })).toBeVisible()
+  // 명예의 전당은 제거됨
+  await expect(page.getByRole('heading', { name: /명예의 전당/ })).toHaveCount(0)
 })
 
 test('위키식 수정·롤백 — 두 번째 사용자가 정보를 수정하고, 첫 사용자가 롤백', async ({ browser }) => {

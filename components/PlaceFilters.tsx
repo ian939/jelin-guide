@@ -85,7 +85,9 @@ export function PlaceFilters() {
                 <label htmlFor="sort">정렬</label>
                 <select id="sort" name="sort" defaultValue={sort}>
                   <option value="recent">최신순</option>
-                  <option value="popular">인기순</option>
+                  <option value="popular">인기순 (리뷰+평점 가중)</option>
+                  <option value="review">리뷰 많은 순</option>
+                  <option value="rating">평점 높은 순</option>
                 </select>
               </div>
             </div>
