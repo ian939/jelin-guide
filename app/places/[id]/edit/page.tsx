@@ -3,9 +3,18 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Header } from '@/components/Header'
+import { RequireAuth } from '@/components/RequireAuth'
 import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
 
-export default function EditPlacePage({ params }: { params: { id: string } }) {
+export default function EditPlacePage(props: { params: { id: string } }) {
+  return (
+    <RequireAuth>
+      <EditPlaceForm {...props} />
+    </RequireAuth>
+  )
+}
+
+function EditPlaceForm({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)

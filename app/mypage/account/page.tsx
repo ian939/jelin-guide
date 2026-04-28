@@ -4,8 +4,17 @@ import { signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Header } from '@/components/Header'
+import { RequireAuth } from '@/components/RequireAuth'
 
 export default function AccountPage() {
+  return (
+    <RequireAuth>
+      <AccountBody />
+    </RequireAuth>
+  )
+}
+
+function AccountBody() {
   const router = useRouter()
   const [baseNickname, setBase] = useState('')
   const [current, setCurrent] = useState('')

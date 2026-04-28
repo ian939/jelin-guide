@@ -3,9 +3,18 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Header } from '@/components/Header'
+import { RequireAuth } from '@/components/RequireAuth'
 import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
 
 export default function NewPlacePage() {
+  return (
+    <RequireAuth>
+      <NewPlaceForm />
+    </RequireAuth>
+  )
+}
+
+function NewPlaceForm() {
   const router = useRouter()
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
