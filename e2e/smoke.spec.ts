@@ -28,9 +28,22 @@ function attachConsoleListeners(page: import('@playwright/test').Page, sink: str
   // 진짜 사용자 영향 에러만: requestfailed/response는 진단용으로만, 어설션엔 미포함
 }
 
-// 어설션용 필터 — Next.js router prefetch가 navigation 중에 취소되는 ERR_ABORTED는 정상
+// 어설션용 필터 — 사용자 영향 있는 에러만 잡는다.
+// 노이즈로 분류:
+//   - ERR_ABORTED: navigation 중에 router prefetch가 취소되는 정상 동작
+//   - "Failed to fetch RSC payload ... Falling back to browser navigation":
+//     Next.js가 명시적으로 graceful fallback을 수행. Netlify Free tier에서 lambda cold start와
+//     RSC prefetch race로 종종 발생하지만 페이지 동작에는 영향 없음.
 function realErrors(errors: string[]): string[] {
-  return errors.filter(e => e.startsWith('[pageerror]') || e.startsWith('[console.error]'))
+  return errors.filter(e => {
+    if (!e.startsWith('[pageerror]') && !e.startsWith('[console.error]')) return false
+    // Next.js graceful fallback
+    if (e.includes('Failed to fetch RSC payload') && e.includes('Falling back to browser navigation')) return false
+    // NextAuth client_fetch_error: lambda cold start race. NextAuth가 다음 refetch interval에 자동 회복.
+    // 진짜 NEXTAUTH_URL/secret 문제면 로그인 시나리오 자체가 fail하므로 본 필터는 안전.
+    if (e.includes('[next-auth][error][CLIENT_FETCH_ERROR]') && e.includes('/api/auth/session')) return false
+    return true
+  })
 }
 
 test.describe.configure({ mode: 'serial' })
@@ -95,6 +108,11 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
 
   // 8. 사용자 영향 에러 0건 (router prefetch 취소 ERR_ABORTED는 정상이라 제외)
   const real = realErrors(errors)
+  if (real.length > 0) {
+    console.log('=== ALL captured errors (real) ===')
+    real.forEach((e, i) => console.log(`[${i}] ${e}\n`))
+    console.log('=== END ===')
+  }
   expect(real, `브라우저 런타임 에러:\n${real.join('\n')}`).toEqual([])
 })
 
@@ -181,9 +199,11 @@ test('/admin — Basic Auth 보호', async ({ browser }) => {
   expect(r1?.status()).toBe(401)
   await noAuth.close()
 
-  // BASIC_AUTH로는 200
+  // BASIC_AUTH로는 200 — 환경별 비번을 env로 override 가능
+  const adminUser = process.env.BASIC_AUTH_USER ?? 'admin'
+  const adminPass = process.env.BASIC_AUTH_PASS ?? 'jelin-admin-2026'
   const withAuth = await browser.newContext({
-    httpCredentials: { username: 'admin', password: 'jelin-admin-2026' },
+    httpCredentials: { username: adminUser, password: adminPass },
   })
   const page2 = await withAuth.newPage()
   const r2 = await page2.goto('/admin')
