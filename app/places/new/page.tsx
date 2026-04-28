@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Header } from '@/components/Header'
+import { MiniMap } from '@/components/MiniMap'
 import { PlaceKeywordSearch, type SearchHit } from '@/components/PlaceKeywordSearch'
 import { RequireAuth } from '@/components/RequireAuth'
 import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
@@ -138,6 +139,15 @@ function NewPlaceForm() {
 
           {picked ? (
             <>
+              {lat != null && lng != null ? (
+                <div>
+                  <p className="mb-2 text-sm font-medium text-zinc-700">위치 확인</p>
+                  <MiniMap lat={lat} lng={lng} name={picked.name} />
+                  <p className="mt-1 text-xs text-zinc-500">
+                    위치가 다르면 위 카드의 <strong>다시 검색</strong>으로 다른 결과를 골라주세요.
+                  </p>
+                </div>
+              ) : null}
               <div>
                 <label htmlFor="category">카테고리 *</label>
                 <select
