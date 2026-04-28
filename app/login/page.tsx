@@ -3,9 +3,18 @@
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 
 export default function LoginPage() {
+  // Next.js 14 정적 export에서 useSearchParams를 쓰는 컴포넌트는 Suspense boundary가 필요
+  return (
+    <Suspense fallback={<main className="px-5 py-10"><p className="text-sm text-zinc-500">로딩 중…</p></main>}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const callbackUrl = params.get('callbackUrl') ?? '/'
