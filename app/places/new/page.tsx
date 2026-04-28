@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import { AddressSearchInput } from '@/components/AddressSearchInput'
 import { Header } from '@/components/Header'
+import { PlaceKeywordSearch, type SearchHit } from '@/components/PlaceKeywordSearch'
 import { RequireAuth } from '@/components/RequireAuth'
 import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
 
@@ -17,8 +17,12 @@ export default function NewPlacePage() {
 
 function NewPlaceForm() {
   const router = useRouter()
+  // 검색 결과로 채워지는 핵심 필드
+  const [picked, setPicked] = useState<SearchHit | null>(null)
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
+  const [lat, setLat] = useState<number | null>(null)
+  const [lng, setLng] = useState<number | null>(null)
   const [category, setCategory] = useState<CategoryCode>('KOREAN')
   const [zeropaySelfReport, setZeropay] = useState(true)
   const [menuMemo, setMenuMemo] = useState('')
@@ -27,14 +31,50 @@ function NewPlaceForm() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  function applyHit(hit: SearchHit) {
+    setPicked(hit)
+    setName(hit.name)
+    setAddress(hit.roadAddress || hit.jibunAddress)
+    setLat(hit.lat)
+    setLng(hit.lng)
+    setCategory(hit.suggestedCategory)
+    setError(null)
+  }
+
+  function reset() {
+    setPicked(null)
+    setName('')
+    setAddress('')
+    setLat(null)
+    setLng(null)
+    setMenuMemo('')
+    setPriceMemo('')
+    setRecommendReason('')
+    setError(null)
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!picked && (!name || !address)) {
+      setError('가게를 검색해서 선택해주세요.')
+      return
+    }
     setLoading(true)
     setError(null)
     const res = await fetch('/api/places', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, address, category, zeropaySelfReport, menuMemo, priceMemo, recommendReason }),
+      body: JSON.stringify({
+        name,
+        address,
+        category,
+        zeropaySelfReport,
+        menuMemo,
+        priceMemo,
+        recommendReason,
+        lat,
+        lng,
+      }),
     })
     setLoading(false)
     if (res.status === 401) {
@@ -44,8 +84,7 @@ function NewPlaceForm() {
     if (res.status === 409) {
       const body = await res.json()
       if (body.error === 'DUPLICATE_PLACE' && body.placeId) {
-        // 이미 등록된 가게 → 기존 상세로 자동 이동 (배너로 사후 안내)
-        router.replace(`/places/${body.placeId}?duplicateNotice=1`)
+        router.replace(`/places/${body.placeId}?flash=registered`)
         return
       }
       setError(body.message ?? '이미 등록된 가게입니다.')
@@ -74,72 +113,92 @@ function NewPlaceForm() {
       <Header title="맛집 추천하기" back="/places" />
       <main className="px-5 py-6">
         <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="name">상호 *</label>
-            <input id="name" value={name} onChange={e => setName(e.target.value)} required />
-          </div>
-          <div>
-            <label htmlFor="address">주소 *</label>
-            <AddressSearchInput id="address" value={address} onChange={setAddress} required />
-          </div>
-          <div>
-            <label htmlFor="category">카테고리 *</label>
-            <select
-              id="category"
-              value={category}
-              onChange={e => setCategory(e.target.value as CategoryCode)}
-            >
-              {CATEGORIES.map(c => (
-                <option key={c} value={c}>
-                  {CATEGORY_LABEL[c]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-3">
-            <input
-              type="checkbox"
-              checked={zeropaySelfReport}
-              onChange={e => setZeropay(e.target.checked)}
-              className="h-5 w-5 accent-accent"
-            />
-            <span className="text-sm">제로페이 사용 가능 (자가신고)</span>
-          </label>
-          <div>
-            <label htmlFor="menuMemo">대표 메뉴 (선택)</label>
-            <input
-              id="menuMemo"
-              value={menuMemo}
-              onChange={e => setMenuMemo(e.target.value)}
-              placeholder="예: 김치찌개·계란말이"
-              maxLength={120}
-            />
-          </div>
-          <div>
-            <label htmlFor="priceMemo">가격대 (선택)</label>
-            <input
-              id="priceMemo"
-              value={priceMemo}
-              onChange={e => setPriceMemo(e.target.value)}
-              placeholder="예: 1만원대"
-              maxLength={60}
-            />
-          </div>
-          <div>
-            <label htmlFor="recommendReason">추천이유 (선택)</label>
-            <textarea
-              id="recommendReason"
-              value={recommendReason}
-              onChange={e => setRecommendReason(e.target.value)}
-              placeholder="이 가게를 추천하는 이유를 적어주세요. 동료에게 도움이 됩니다."
-              maxLength={500}
-            />
-            <p className="mt-1 text-xs text-zinc-500">{recommendReason.length} / 500</p>
-          </div>
-          {error ? <p className="text-sm text-red-600">{error}</p> : null}
-          <button type="submit" disabled={loading} className="btn">
-            {loading ? '등록 중…' : '추천하기'}
-          </button>
+          {!picked ? (
+            <PlaceKeywordSearch onSelect={applyHit} />
+          ) : (
+            <div className="rounded-2xl border border-accent bg-accent-soft p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold">{picked.name}</p>
+                  <p className="text-xs text-zinc-600">{picked.roadAddress || picked.jibunAddress}</p>
+                  {picked.category ? (
+                    <p className="mt-1 text-[11px] text-zinc-500">{picked.category}</p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="shrink-0 rounded-lg bg-white px-2 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200"
+                >
+                  다시 검색
+                </button>
+              </div>
+            </div>
+          )}
+
+          {picked ? (
+            <>
+              <div>
+                <label htmlFor="category">카테고리 *</label>
+                <select
+                  id="category"
+                  value={category}
+                  onChange={e => setCategory(e.target.value as CategoryCode)}
+                >
+                  {CATEGORIES.map(c => (
+                    <option key={c} value={c}>
+                      {CATEGORY_LABEL[c]}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-zinc-500">검색 결과에서 자동 추천된 카테고리. 필요시 수정.</p>
+              </div>
+              <label className="flex items-center gap-3 rounded-xl border border-zinc-200 p-3">
+                <input
+                  type="checkbox"
+                  checked={zeropaySelfReport}
+                  onChange={e => setZeropay(e.target.checked)}
+                  className="h-5 w-5 accent-accent"
+                />
+                <span className="text-sm">제로페이 사용 가능 (자가신고)</span>
+              </label>
+              <div>
+                <label htmlFor="menuMemo">대표 메뉴 (선택)</label>
+                <input
+                  id="menuMemo"
+                  value={menuMemo}
+                  onChange={e => setMenuMemo(e.target.value)}
+                  placeholder="예: 김치찌개·계란말이"
+                  maxLength={120}
+                />
+              </div>
+              <div>
+                <label htmlFor="priceMemo">가격대 (선택)</label>
+                <input
+                  id="priceMemo"
+                  value={priceMemo}
+                  onChange={e => setPriceMemo(e.target.value)}
+                  placeholder="예: 1만원대"
+                  maxLength={60}
+                />
+              </div>
+              <div>
+                <label htmlFor="recommendReason">추천이유 (선택)</label>
+                <textarea
+                  id="recommendReason"
+                  value={recommendReason}
+                  onChange={e => setRecommendReason(e.target.value)}
+                  placeholder="이 가게를 추천하는 이유를 적어주세요. 동료에게 도움이 됩니다."
+                  maxLength={500}
+                />
+                <p className="mt-1 text-xs text-zinc-500">{recommendReason.length} / 500</p>
+              </div>
+              {error ? <p className="text-sm text-red-600">{error}</p> : null}
+              <button type="submit" disabled={loading} className="btn">
+                {loading ? '등록 중…' : '추천하기'}
+              </button>
+            </>
+          ) : null}
         </form>
       </main>
     </>

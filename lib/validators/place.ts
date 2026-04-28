@@ -31,6 +31,9 @@ export const placeSubmitSchema = z.object({
   menuMemo: z.string().trim().max(120).optional().or(z.literal('')),
   priceMemo: z.string().trim().max(60).optional().or(z.literal('')),
   recommendReason: z.string().trim().max(500).optional().or(z.literal('')),
+  // 카카오 검색에서 받은 좌표 — 있으면 신뢰, 없으면 Geocoding fallback
+  lat: z.number().min(-90).max(90).optional().nullable(),
+  lng: z.number().min(-180).max(180).optional().nullable(),
 })
 
 export type PlaceSubmit = z.infer<typeof placeSubmitSchema>

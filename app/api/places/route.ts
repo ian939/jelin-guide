@@ -90,15 +90,27 @@ export async function POST(req: Request) {
   }
   const data = parsed.data
 
-  const geo = await geocodeAddress(data.address)
-  if (!geo) {
-    return NextResponse.json(
-      { error: 'GEOCODE_FAILED', message: '주소를 다시 확인해주세요.' },
-      { status: 422 }
-    )
+  // 카카오 검색에서 받은 좌표가 있으면 신뢰, 없으면 Geocoding으로 fallback.
+  let lat: number
+  let lng: number
+  let canonicalAddress = data.address
+  if (data.lat != null && data.lng != null) {
+    lat = data.lat
+    lng = data.lng
+  } else {
+    const geo = await geocodeAddress(data.address)
+    if (!geo) {
+      return NextResponse.json(
+        { error: 'GEOCODE_FAILED', message: '주소를 다시 확인해주세요.' },
+        { status: 422 }
+      )
+    }
+    lat = geo.lat
+    lng = geo.lng
+    canonicalAddress = geo.canonicalAddress
   }
 
-  const dup = await findDuplicatePlace({ name: data.name, lat: geo.lat, lng: geo.lng })
+  const dup = await findDuplicatePlace({ name: data.name, lat, lng })
   if (dup) {
     return NextResponse.json(
       { error: 'DUPLICATE_PLACE', message: '이미 등록된 가게입니다. 리뷰로 가시겠어요?', placeId: dup.id },
@@ -110,9 +122,9 @@ export async function POST(req: Request) {
     const created = await tx.place.create({
       data: {
         name: data.name,
-        address: geo.canonicalAddress,
-        lat: geo.lat,
-        lng: geo.lng,
+        address: canonicalAddress,
+        lat,
+        lng,
         category: data.category,
         zeropaySelfReport: data.zeropaySelfReport,
         menuMemo: data.menuMemo || null,

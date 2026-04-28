@@ -1,21 +1,20 @@
 import { expect, test } from '@playwright/test'
 
-// 동일 닉네임·주소 충돌 회피 — 매 실행마다 unique
+// 동일 닉네임 충돌 회피 — 매 실행마다 unique
 const NICK = `e2e_${Date.now().toString(36).slice(-6)}`
 const PWD = 'e2e-test-12345'
-const PLACE_NAME = `테스트가게_${NICK}`
-// 50m 이상 떨어진 한국 명소 회전 — 매 실행마다 다른 좌표 → 중복 차단 회피
-const ADDRESSES = [
-  '서울특별시 중구 세종대로 110', // 서울시청
-  '서울특별시 강남구 테헤란로 152', // 강남파이낸스센터
-  '서울특별시 종로구 사직로 161', // 경복궁
-  '서울특별시 영등포구 여의대로 24', // 여의도
-  '서울특별시 마포구 양화로 45', // 합정
-  '서울특별시 용산구 이태원로 200',
-  '부산광역시 해운대구 해운대해변로 264',
-  '인천광역시 중구 공항로 272', // 인천공항
+// 카카오 키워드 검색 결과가 풍부한 키워드들을 회전 — 매번 다른 가게 좌표라 중복 차단 회피
+const SEARCH_KEYWORDS = [
+  '서울시청',
+  '강남파이낸스센터',
+  '경복궁',
+  '여의도공원',
+  '잠실역',
+  '이태원역',
+  '부산해운대',
+  '인천공항',
 ]
-const ADDRESS = ADDRESSES[Math.floor(Date.now() / 1000) % ADDRESSES.length]
+const SEARCH_KEYWORD = SEARCH_KEYWORDS[Math.floor(Date.now() / 1000) % SEARCH_KEYWORDS.length]
 
 // 콘솔 에러를 추적해서 React runtime 에러를 잡는다
 function attachConsoleListeners(page: import('@playwright/test').Page, sink: string[]) {
@@ -46,6 +45,10 @@ function realErrors(errors: string[]): string[] {
   })
 }
 
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 test.describe.configure({ mode: 'serial' })
 
 test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 → 마이페이지', async ({ page }) => {
@@ -65,29 +68,37 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   // 헤더에 닉네임 표시 (자동 로그인)
   await expect(page.getByRole('link', { name: NICK })).toBeVisible({ timeout: 10_000 })
 
-  // 3. 맛집 추천
+  // 3. 맛집 추천 — 카카오 키워드 검색 → 첫 결과 선택 → 폼 자동 채움
   await page.goto('/places/new')
-  await page.getByLabel('상호 *').fill(PLACE_NAME)
-  await page.getByLabel('주소 *').fill(ADDRESS)
-  await page.getByLabel('카테고리 *').selectOption('KOREAN')
+  await page.getByLabel(/가게 검색/).fill(SEARCH_KEYWORD)
+  // 디바운스(300ms) + API 호출 후 결과 카드가 뜰 때까지 대기
+  const firstHit = page.getByRole('main').getByRole('list').getByRole('button').first()
+  await expect(firstHit).toBeVisible({ timeout: 10_000 })
+  // 첫 결과를 잡고 그 텍스트(가게명)를 기억해서 상세 어설션에 사용
+  const pickedName = (await firstHit.locator('p').first().textContent())?.trim() ?? ''
+  await firstHit.click()
+  // 추가 정보 입력
   await page.getByLabel('대표 메뉴 (선택)').fill('김치찌개')
   await page.getByLabel('가격대 (선택)').fill('1만원대')
+  await page.getByLabel('추천이유 (선택)').fill('테스트 추천이유')
   await page.getByRole('button', { name: /^추천하기$/ }).click()
 
   // 4. 가맹점 상세로 이동 확인
-  await page.waitForURL(/\/places\/[a-z0-9]+$/, { timeout: 15_000 }).catch(async err => {
+  await page.waitForURL(/\/places\/[a-z0-9]+(\?.*)?$/, { timeout: 15_000 }).catch(async err => {
     console.log('--- DIAGNOSTIC: waitForURL timeout ---')
     console.log('current URL:', page.url())
     console.log('errors so far:\n' + errors.join('\n'))
     console.log('page text head:\n' + (await page.locator('body').innerText()).slice(0, 800))
     throw err
   })
-  await expect(page.getByRole('main').getByRole('heading', { name: PLACE_NAME })).toBeVisible()
+  if (pickedName) {
+    await expect(page.getByRole('main').getByRole('heading', { name: pickedName })).toBeVisible()
+  }
   await expect(page.getByText(/제로페이/).first()).toBeVisible()
 
   // 5. 리뷰 작성
   await page.getByRole('link', { name: /리뷰 쓰기/ }).click()
-  await page.waitForURL(/\/reviews\/new$/)
+  await page.waitForURL(/\/reviews\/new(\?.*)?$/)
   // StarSelect: 5점 = 마지막 별 클릭
   for (const label of ['맛', '가성비', '분위기']) {
     const row = page.getByText(label, { exact: true }).locator('..').locator('..')
@@ -96,7 +107,7 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   }
   await page.getByLabel(/한마디/).fill('테스트 리뷰입니다. 맛 좋음.')
   await page.getByRole('button', { name: /리뷰 등록/ }).click()
-  await page.waitForURL(/\/places\/[a-z0-9]+$/, { timeout: 15_000 })
+  await page.waitForURL(/\/places\/[a-z0-9]+(\?.*)?$/, { timeout: 15_000 })
 
   // 6. 가맹점 상세에서 평균 평점 노출 확인
   await expect(page.getByRole('heading', { name: /^리뷰 1$/ })).toBeVisible()
@@ -104,7 +115,9 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   // 7. 마이페이지에서 내 추천·리뷰 확인
   await page.goto('/mypage')
   await expect(page.getByRole('heading', { name: new RegExp(`^${NICK}`) })).toBeVisible()
-  await expect(page.getByRole('link', { name: new RegExp(PLACE_NAME) }).first()).toBeVisible()
+  if (pickedName) {
+    await expect(page.getByRole('link', { name: new RegExp(escapeRegex(pickedName)) }).first()).toBeVisible()
+  }
 
   // 8. 사용자 영향 에러 0건 (router prefetch 취소 ERR_ABORTED는 정상이라 제외)
   const real = realErrors(errors)
