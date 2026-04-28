@@ -66,7 +66,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
       <main className="px-5 pb-12">
         <div className="mt-4 space-y-2">
           <p className="text-xs text-zinc-500">
-            {CATEGORY_LABEL[place.category]} · 제안 by {place.createdBy.nickname}
+            {CATEGORY_LABEL[place.category]} · 추천 by {place.createdBy.nickname}
           </p>
           <h1 className="text-xl font-bold">{place.name}</h1>
           <p className="text-sm text-zinc-600">{place.address}</p>

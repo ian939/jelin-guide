@@ -50,7 +50,7 @@ export default function NewPlacePage() {
       setError(
         body.issues?.fieldErrors
           ? Object.values(body.issues.fieldErrors).flat().join(' ')
-          : '제안 중 오류가 발생했습니다.'
+          : '추천 등록 중 오류가 발생했습니다.'
       )
       return
     }
@@ -60,7 +60,7 @@ export default function NewPlacePage() {
 
   return (
     <>
-      <Header title="가맹점 제안" back="/places" />
+      <Header title="맛집 추천하기" back="/places" />
       <main className="px-5 py-6">
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
@@ -125,7 +125,7 @@ export default function NewPlacePage() {
           </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <button type="submit" disabled={loading} className="btn">
-            {loading ? '등록 중…' : '제안하기'}
+            {loading ? '등록 중…' : '추천하기'}
           </button>
         </form>
       </main>

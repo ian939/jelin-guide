@@ -32,15 +32,15 @@ function BootstrapHome({ placeCount }: { placeCount: number }) {
     <main className="px-5 py-10">
       <p className="mb-2 text-xs font-semibold text-accent">막 시작한 가이드</p>
       <h1 className="mb-3 text-2xl font-bold leading-tight">
-        가맹점 {placeCount}곳<br />
-        첫 제안자가 되어보세요
+        등록된 맛집 {placeCount}곳<br />
+        첫 추천자가 되어보세요
       </h1>
       <p className="mb-8 text-sm text-zinc-600">
         제로페이 가맹 맛집을 동료가 직접 추천·평가하는 사내 가이드입니다.
         아직 비어있는 자리에, 좋아하는 가게를 가장 먼저 올려주세요.
       </p>
       <Link href="/places/new" className="btn">
-        가맹점 제안하기
+        맛집 추천하기
       </Link>
       <Link href="/places" className="mt-3 block text-center text-sm text-zinc-500 underline">
         둘러보기
@@ -103,7 +103,7 @@ async function CurationHome() {
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 px-1 text-base font-bold">🔥 제안 랭킹</h2>
+        <h2 className="mb-3 px-1 text-base font-bold">🔥 추천 랭킹</h2>
         <ol className="card divide-y divide-zinc-100">
           {proposers.map((u, i) => (
             <li key={u.userId} className="flex items-center justify-between py-3 text-sm">
@@ -111,7 +111,7 @@ async function CurationHome() {
                 <span className="mr-2 font-semibold">{i + 1}위</span>
                 {u.nickname}
               </span>
-              <span className="text-zinc-500">제안 {u.count}</span>
+              <span className="text-zinc-500">추천 {u.count}</span>
             </li>
           ))}
         </ol>

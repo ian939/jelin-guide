@@ -35,7 +35,7 @@ function realErrors(errors: string[]): string[] {
 
 test.describe.configure({ mode: 'serial' })
 
-test('전체 골든 패스: 가입 → 로그인 → 가맹점 제안 → 리뷰 → 마이페이지', async ({ page }) => {
+test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 → 마이페이지', async ({ page }) => {
   const errors: string[] = []
   attachConsoleListeners(page, errors)
 
@@ -52,14 +52,14 @@ test('전체 골든 패스: 가입 → 로그인 → 가맹점 제안 → 리뷰
   // 헤더에 닉네임 표시 (자동 로그인)
   await expect(page.getByRole('link', { name: NICK })).toBeVisible({ timeout: 10_000 })
 
-  // 3. 가맹점 제안
+  // 3. 맛집 추천
   await page.goto('/places/new')
   await page.getByLabel('상호 *').fill(PLACE_NAME)
   await page.getByLabel('주소 *').fill(ADDRESS)
   await page.getByLabel('카테고리 *').selectOption('KOREAN')
   await page.getByLabel('대표 메뉴 (선택)').fill('김치찌개')
   await page.getByLabel('가격대 (선택)').fill('1만원대')
-  await page.getByRole('button', { name: /제안하기/ }).click()
+  await page.getByRole('button', { name: /^추천하기$/ }).click()
 
   // 4. 가맹점 상세로 이동 확인
   await page.waitForURL(/\/places\/[a-z0-9]+$/, { timeout: 15_000 }).catch(async err => {
@@ -88,7 +88,7 @@ test('전체 골든 패스: 가입 → 로그인 → 가맹점 제안 → 리뷰
   // 6. 가맹점 상세에서 평균 평점 노출 확인
   await expect(page.getByRole('heading', { name: /^리뷰 1$/ })).toBeVisible()
 
-  // 7. 마이페이지에서 내 제안·리뷰 확인
+  // 7. 마이페이지에서 내 추천·리뷰 확인
   await page.goto('/mypage')
   await expect(page.getByRole('heading', { name: new RegExp(`^${NICK}`) })).toBeVisible()
   await expect(page.getByRole('link', { name: new RegExp(PLACE_NAME) }).first()).toBeVisible()
@@ -98,12 +98,21 @@ test('전체 골든 패스: 가입 → 로그인 → 가맹점 제안 → 리뷰
   expect(real, `브라우저 런타임 에러:\n${real.join('\n')}`).toEqual([])
 })
 
-test('지도 페이지 — 마커가 렌더링되거나 SDK 로드 실패가 graceful', async ({ page }) => {
+test('지도 페이지 — 마커·SK일렉링크 리센터·추천 FAB', async ({ page }) => {
   const errors: string[] = []
   attachConsoleListeners(page, errors)
   await page.goto('/map')
   await expect(page.getByRole('heading', { name: /지도/ })).toBeVisible()
-  // 네이버 SDK는 외부 의존이라 마커 까지 검증하지는 않음 — pageerror만 잡음
+
+  // SK일렉링크 리센터 버튼이 지도 위에 노출
+  await expect(page.getByRole('button', { name: /SK일렉링크/ })).toBeVisible()
+
+  // "+ 맛집 추천하기" floating action button이 보이고 /places/new 로 연결
+  const fab = page.getByRole('link', { name: /\+ 맛집 추천하기/ })
+  await expect(fab).toBeVisible()
+  await expect(fab).toHaveAttribute('href', '/places/new')
+
+  // SDK는 외부 의존이라 마커는 검증하지 않음 — React 런타임 에러만 잡음
   const reactErrors = errors.filter(e => e.startsWith('[pageerror]'))
   expect(reactErrors, `React 런타임 에러:\n${reactErrors.join('\n')}`).toEqual([])
 })
@@ -112,7 +121,7 @@ test('랭킹 페이지 — 보드 3개 노출', async ({ page }) => {
   await page.goto('/ranking')
   await expect(page.getByRole('heading', { name: /이달의 심사위원/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: /명예의 전당/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: /제안 랭킹/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /추천 랭킹/ })).toBeVisible()
 })
 
 test('위키식 수정·롤백 — 두 번째 사용자가 정보를 수정하고, 첫 사용자가 롤백', async ({ browser }) => {

@@ -38,15 +38,15 @@ export default async function MyPage() {
         </section>
 
         <section className="mt-6 grid grid-cols-3 gap-2">
-          <RankCell label="제안" rank={ranks.proposal} />
+          <RankCell label="추천" rank={ranks.proposal} />
           <RankCell label="이달 심사" rank={ranks.monthly} />
           <RankCell label="명예의 전당" rank={ranks.hall} />
         </section>
 
         <section className="mt-8">
-          <h3 className="mb-3 text-base font-bold">내가 제안한 가맹점 ({places.length})</h3>
+          <h3 className="mb-3 text-base font-bold">내가 추천한 맛집 ({places.length})</h3>
           {places.length === 0 ? (
-            <p className="text-sm text-zinc-500">아직 제안한 가맹점이 없어요.</p>
+            <p className="text-sm text-zinc-500">아직 추천한 맛집이 없어요.</p>
           ) : (
             <ul className="space-y-2">
               {places.map(p => (

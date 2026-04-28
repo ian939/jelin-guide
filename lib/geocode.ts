@@ -14,8 +14,8 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
   const secret = process.env.NAVER_GEOCODING_CLIENT_SECRET
   if (!id || !secret) {
     if (process.env.NODE_ENV !== 'production') {
-      // 개발 환경에선 좌표 주입을 위해 더미 값 (서울 시청)
-      return { lat: 37.5665, lng: 126.978, canonicalAddress: address }
+      // 개발 환경에선 좌표 주입을 위해 더미 값 (논현동 기준)
+      return { lat: 37.5159083, lng: 127.0339653, canonicalAddress: address }
     }
     return null
   }

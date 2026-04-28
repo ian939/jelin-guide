@@ -69,7 +69,7 @@ export default function MapPage() {
           el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }}
       />
-      <main className="px-4 pb-12">
+      <main className="px-4 pb-24">
         <p className="my-3 text-xs text-zinc-500">
           {loading ? '불러오는 중…' : `${items.length}곳 표시 중 · 마커 50개 이상은 작은 점으로 표시`}
         </p>
@@ -90,6 +90,12 @@ export default function MapPage() {
           ))}
         </ul>
       </main>
+      <Link
+        href="/places/new"
+        className="fixed bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full bg-accent px-6 py-3 text-sm font-medium text-white shadow-lg"
+      >
+        + 맛집 추천하기
+      </Link>
     </>
   )
 }

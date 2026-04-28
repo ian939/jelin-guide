@@ -21,7 +21,7 @@ export default async function RankingPage() {
       <main className="space-y-8 px-4 pb-12">
         <Section title="👑 이달의 심사위원" subtitle="이번 달 작성한 리뷰 수" rows={monthly} />
         <Section title="🌟 명예의 전당" subtitle="누적 리뷰 수" rows={hall} />
-        <Section title="🔥 제안 랭킹" subtitle="누적 가맹점 제안 수" rows={proposal} />
+        <Section title="🔥 추천 랭킹" subtitle="누적 맛집 추천 수" rows={proposal} />
       </main>
     </>
   )
