@@ -1,0 +1,18 @@
+node_modules/
+.next/
+out/
+.env
+.env*.local
+*.log
+.vercel
+.netlify
+.DS_Store
+coverage/
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo

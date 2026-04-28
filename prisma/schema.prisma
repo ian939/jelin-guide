@@ -1,0 +1,238 @@
+// 제슐렝가이드 Prisma Schema (P1 산출물)
+//
+// 출처: jelin-guide-agent-design.md 6장 + output/specs/requirements.md
+// 데이터베이스: Neon Postgres (프로덕션·로컬 동일, 브랜치로 분기)
+// NextAuth: Credentials Provider + DB 세션 (Prisma Adapter 표준 테이블 유지)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Pooled (런타임)
+  directUrl = env("DIRECT_URL")   // Direct (migrate / introspection)
+}
+
+// ─────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────
+
+enum Category {
+  KOREAN
+  WESTERN
+  JAPANESE
+  CHINESE
+  SNACK
+  CAFE
+  BAR
+  ETC
+}
+
+enum ReportTargetType {
+  REVIEW
+  PLACE
+}
+
+enum ReportResolution {
+  PENDING
+  RESTORED
+  DELETED
+}
+
+// ─────────────────────────────────────────────
+// NextAuth Adapter 표준 테이블 (+ 제슐렝가이드 커스텀 필드)
+// ─────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+
+  // NextAuth 표준 (Credentials만 쓰지만 Adapter 호환을 위해 유지)
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  // 제슐렝가이드 커스텀
+  nickname     String  @unique // 2~16자, 한글·영문·숫자·_
+  passwordHash String           // bcrypt round ≥ 10
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime? // 탈퇴 시 셋. 닉네임은 잔존, 로그인·세션은 차단.
+
+  accounts Account[]
+  sessions Session[]
+
+  places         Place[]         @relation("PlaceCreator")
+  placeRevisions PlaceRevision[] @relation("PlaceEditor")
+  reviews        Review[]
+  zeropayVotes   ZeropayVote[]
+  reports        Report[]        @relation("Reporter")
+
+  @@index([deletedAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────────────────────────
+// 도메인 모델
+// ─────────────────────────────────────────────
+
+/// 가맹점. 활성 필드는 Place에 직접 저장(쿼리 단순화),
+/// 위키식 수정 이력은 PlaceRevision에 append-only로 누적.
+model Place {
+  id      String @id @default(cuid())
+  name    String
+  address String
+  lat     Float
+  lng     Float
+
+  category          Category
+  zeropaySelfReport Boolean // 등록·수정 시 제출자가 표기한 자가신고 (현재 활성)
+  menuMemo          String? // 대표 메뉴
+  priceMemo         String? // 가격대
+
+  createdById String
+  createdBy   User   @relation("PlaceCreator", fields: [createdById], references: [id])
+
+  isHidden Boolean   @default(false) // 신고 임계 도달 시 자동 숨김
+  hiddenAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  revisions    PlaceRevision[]
+  reviews      Review[]
+  zeropayVotes ZeropayVote[]
+
+  @@index([category])
+  @@index([lat, lng]) // 지도 viewport bbox 쿼리
+  @@index([isHidden])
+  @@index([createdById])
+}
+
+/// 가맹점 수정 이력 (위키식). 첫 등록 시점에도 1건이 함께 생성된다.
+model PlaceRevision {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  // 스냅샷
+  name              String
+  address           String
+  lat               Float
+  lng               Float
+  category          Category
+  zeropaySelfReport Boolean
+  menuMemo          String?
+  priceMemo         String?
+
+  editorId String
+  editor   User   @relation("PlaceEditor", fields: [editorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([placeId, createdAt])
+  @@index([editorId])
+}
+
+/// 리뷰. 1인 1가맹점 1리뷰. 평점은 3차원 1~5.
+model Review {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  scoreTaste      Int // 1~5
+  scoreValue      Int
+  scoreAtmosphere Int
+  body            String @db.Text // 10~1000자
+
+  isHidden Boolean   @default(false)
+  hiddenAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([placeId, authorId]) // 1인 1리뷰
+  @@index([placeId])
+  @@index([authorId])
+  @@index([isHidden])
+  @@index([createdAt]) // 이달의 심사위원 / 명예의 전당 집계용
+}
+
+/// 제로페이 사용 가능/불가 투표. 1인 1표, 변경 가능.
+model ZeropayVote {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+
+  voterId String
+  voter   User   @relation(fields: [voterId], references: [id])
+
+  isAvailable Boolean // true=사용 가능, false=불가
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([placeId, voterId])
+  @@index([placeId])
+}
+
+/// 신고. 동일 사용자→동일 항목 1회. 누적 ≥ 3건이면 대상의 isHidden을 true로.
+model Report {
+  id         String           @id @default(cuid())
+  targetType ReportTargetType
+  targetId   String
+
+  reporterId String
+  reporter   User   @relation("Reporter", fields: [reporterId], references: [id])
+
+  reason     String?          // 자유 텍스트(선택)
+  resolution ReportResolution @default(PENDING)
+  resolvedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@unique([targetType, targetId, reporterId])
+  @@index([targetType, targetId]) // 카운트 집계
+  @@index([resolution])
+}
