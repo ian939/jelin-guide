@@ -19,7 +19,10 @@ export function RollbackButton({ placeId, revisionId }: { placeId: string; revis
       router.replace(`/login?callbackUrl=/places/${placeId}/history`)
       return
     }
-    if (res.ok) router.refresh()
+    if (res.ok) {
+      router.replace(`/places/${placeId}?flash=rolledback`)
+      router.refresh()
+    }
   }
   return (
     <button onClick={rollback} disabled={busy} className="text-xs text-accent">

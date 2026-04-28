@@ -55,7 +55,7 @@ export function ReviewForm({
       )
       return
     }
-    router.replace(`/places/${placeId}`)
+    router.replace(`/places/${placeId}?flash=reviewed`)
     router.refresh()
   }
 

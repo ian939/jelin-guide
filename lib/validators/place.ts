@@ -30,6 +30,7 @@ export const placeSubmitSchema = z.object({
   zeropaySelfReport: z.boolean(),
   menuMemo: z.string().trim().max(120).optional().or(z.literal('')),
   priceMemo: z.string().trim().max(60).optional().or(z.literal('')),
+  recommendReason: z.string().trim().max(500).optional().or(z.literal('')),
 })
 
 export type PlaceSubmit = z.infer<typeof placeSubmitSchema>

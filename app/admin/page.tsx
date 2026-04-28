@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/db'
+import { AdminPlaceRow } from '@/components/AdminPlaceRow'
 import { AdminReportRow } from '@/components/AdminReportRow'
+import { CATEGORY_LABEL } from '@/lib/validators/place'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,7 +16,7 @@ export default async function AdminPage() {
 
   const reviewIds = pendingReports.filter(r => r.targetType === 'REVIEW').map(r => r.targetId)
   const placeIds = pendingReports.filter(r => r.targetType === 'PLACE').map(r => r.targetId)
-  const [reviews, places, deletedUsers] = await Promise.all([
+  const [reviews, places, deletedUsers, allPlaces] = await Promise.all([
     reviewIds.length
       ? prisma.review.findMany({
           where: { id: { in: reviewIds } },
@@ -31,6 +33,14 @@ export default async function AdminPage() {
       orderBy: { deletedAt: 'desc' },
       take: 30,
       select: { id: true, nickname: true, deletedAt: true },
+    }),
+    prisma.place.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        createdBy: { select: { nickname: true } },
+        _count: { select: { reviews: true } },
+      },
+      take: 100,
     }),
   ])
   const reviewMap = new Map(reviews.map(r => [r.id, r]))
@@ -62,6 +72,34 @@ export default async function AdminPage() {
                 />
               )
             })}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-3 font-bold">전체 가맹점 ({allPlaces.length})</h2>
+        <p className="mb-3 text-xs text-zinc-500">
+          삭제 시 해당 가맹점의 리뷰·수정 이력·투표가 모두 함께 삭제됩니다 (cascade). 신중히 사용.
+        </p>
+        {allPlaces.length === 0 ? (
+          <p className="text-sm text-zinc-500">등록된 가맹점이 없습니다.</p>
+        ) : (
+          <ul className="space-y-2">
+            {allPlaces.map(p => (
+              <AdminPlaceRow
+                key={p.id}
+                place={{
+                  id: p.id,
+                  name: p.name,
+                  address: p.address,
+                  category: CATEGORY_LABEL[p.category],
+                  isHidden: p.isHidden,
+                  createdBy: p.createdBy.nickname,
+                  reviewCount: p._count.reviews,
+                  createdAt: p.createdAt.toISOString(),
+                }}
+              />
+            ))}
           </ul>
         )}
       </section>

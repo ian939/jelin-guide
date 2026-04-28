@@ -69,12 +69,28 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
             {CATEGORY_LABEL[place.category]} · 추천 by {place.createdBy.nickname}
           </p>
           <h1 className="text-xl font-bold">{place.name}</h1>
-          <p className="text-sm text-zinc-600">{place.address}</p>
+          <div className="flex items-start gap-2">
+            <p className="flex-1 text-sm text-zinc-600">{place.address}</p>
+            <a
+              href={`https://map.naver.com/p/search/${encodeURIComponent(place.name + ' ' + place.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+            >
+              네이버지도 ↗
+            </a>
+          </div>
           {place.menuMemo ? (
             <p className="text-sm text-zinc-600">🍴 {place.menuMemo}</p>
           ) : null}
           {place.priceMemo ? (
             <p className="text-sm text-zinc-600">💸 {place.priceMemo}</p>
+          ) : null}
+          {place.recommendReason ? (
+            <div className="mt-3 rounded-xl bg-accent-soft p-3">
+              <p className="text-xs font-semibold text-accent">💬 추천이유</p>
+              <p className="mt-1 whitespace-pre-line text-sm text-zinc-800">{place.recommendReason}</p>
+            </div>
           ) : null}
         </div>
 

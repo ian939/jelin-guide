@@ -76,6 +76,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         zeropaySelfReport: data.zeropaySelfReport,
         menuMemo: data.menuMemo || null,
         priceMemo: data.priceMemo || null,
+        recommendReason: data.recommendReason || null,
       },
     })
     await tx.placeRevision.create({
@@ -89,6 +90,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         zeropaySelfReport: u.zeropaySelfReport,
         menuMemo: u.menuMemo,
         priceMemo: u.priceMemo,
+        recommendReason: u.recommendReason,
         editorId: user.id,
       },
     })

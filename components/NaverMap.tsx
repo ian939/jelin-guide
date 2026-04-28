@@ -79,7 +79,7 @@ export function NaverMap({
         },
       })
     }
-    // 마커 갱신
+    // 마커 갱신 — 식당 모양(흰 원 + 포크/나이프 이모지). 50개 이상 시 작은 점으로.
     for (const m of markerObjs.current) m.setMap(null)
     markerObjs.current = []
     const tooMany = markers.length > CLUSTER_THRESHOLD
@@ -94,7 +94,25 @@ export function NaverMap({
                 '<div style="width:10px;height:10px;border-radius:9999px;background:#1F6BFF;opacity:.85"></div>',
               anchor: new naver.maps.Point(5, 5),
             }
-          : undefined,
+          : {
+              content: `
+                <div style="
+                  width: 32px;
+                  height: 32px;
+                  border-radius: 9999px;
+                  background: #ffffff;
+                  border: 2px solid #1F6BFF;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 16px;
+                  line-height: 1;
+                  box-shadow: 0 3px 8px rgba(31, 107, 255, 0.25), 0 1px 3px rgba(0,0,0,0.15);
+                  cursor: pointer;
+                ">🍴</div>
+              `,
+              anchor: new naver.maps.Point(16, 16),
+            },
       })
       if (onMarkerClick)
         naver.maps.Event.addListener(marker, 'click', () => onMarkerClick(m.id))

@@ -33,6 +33,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         zeropaySelfReport: target.zeropaySelfReport,
         menuMemo: target.menuMemo,
         priceMemo: target.priceMemo,
+        recommendReason: target.recommendReason,
       },
     })
     await tx.placeRevision.create({
@@ -46,6 +47,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         zeropaySelfReport: u.zeropaySelfReport,
         menuMemo: u.menuMemo,
         priceMemo: u.priceMemo,
+        recommendReason: u.recommendReason,
         editorId: user.id,
       },
     })

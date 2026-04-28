@@ -23,6 +23,7 @@ function NewPlaceForm() {
   const [zeropaySelfReport, setZeropay] = useState(true)
   const [menuMemo, setMenuMemo] = useState('')
   const [priceMemo, setPriceMemo] = useState('')
+  const [recommendReason, setRecommendReason] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -33,7 +34,7 @@ function NewPlaceForm() {
     const res = await fetch('/api/places', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, address, category, zeropaySelfReport, menuMemo, priceMemo }),
+      body: JSON.stringify({ name, address, category, zeropaySelfReport, menuMemo, priceMemo, recommendReason }),
     })
     setLoading(false)
     if (res.status === 401) {
@@ -65,7 +66,7 @@ function NewPlaceForm() {
       return
     }
     const { place } = await res.json()
-    router.replace(`/places/${place.id}`)
+    router.replace(`/places/${place.id}?flash=registered`)
   }
 
   return (
@@ -123,6 +124,17 @@ function NewPlaceForm() {
               placeholder="예: 1만원대"
               maxLength={60}
             />
+          </div>
+          <div>
+            <label htmlFor="recommendReason">추천이유 (선택)</label>
+            <textarea
+              id="recommendReason"
+              value={recommendReason}
+              onChange={e => setRecommendReason(e.target.value)}
+              placeholder="이 가게를 추천하는 이유를 적어주세요. 동료에게 도움이 됩니다."
+              maxLength={500}
+            />
+            <p className="mt-1 text-xs text-zinc-500">{recommendReason.length} / 500</p>
           </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <button type="submit" disabled={loading} className="btn">

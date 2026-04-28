@@ -117,6 +117,7 @@ export async function POST(req: Request) {
         zeropaySelfReport: data.zeropaySelfReport,
         menuMemo: data.menuMemo || null,
         priceMemo: data.priceMemo || null,
+        recommendReason: data.recommendReason || null,
         createdById: user.id,
       },
     })
@@ -131,6 +132,7 @@ export async function POST(req: Request) {
         zeropaySelfReport: created.zeropaySelfReport,
         menuMemo: created.menuMemo,
         priceMemo: created.priceMemo,
+        recommendReason: created.recommendReason,
         editorId: user.id,
       },
     })

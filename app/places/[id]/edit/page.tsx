@@ -26,6 +26,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
   const [zeropaySelfReport, setZeropay] = useState(true)
   const [menuMemo, setMenuMemo] = useState('')
   const [priceMemo, setPriceMemo] = useState('')
+  const [recommendReason, setRecommendReason] = useState('')
 
   useEffect(() => {
     fetch(`/api/places/${params.id}`)
@@ -38,6 +39,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
         setZeropay(place.zeropaySelfReport)
         setMenuMemo(place.menuMemo ?? '')
         setPriceMemo(place.priceMemo ?? '')
+        setRecommendReason(place.recommendReason ?? '')
         setLoading(false)
       })
   }, [params.id])
@@ -49,7 +51,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
     const res = await fetch(`/api/places/${params.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, address, category, zeropaySelfReport, menuMemo, priceMemo }),
+      body: JSON.stringify({ name, address, category, zeropaySelfReport, menuMemo, priceMemo, recommendReason }),
     })
     setSubmitting(false)
     if (res.status === 401) {
@@ -65,7 +67,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
       setError('수정 중 오류가 발생했습니다.')
       return
     }
-    router.replace(`/places/${params.id}`)
+    router.replace(`/places/${params.id}?flash=edited`)
     router.refresh()
   }
 
@@ -118,6 +120,17 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
             <div>
               <label htmlFor="priceMemo">가격대</label>
               <input id="priceMemo" value={priceMemo} onChange={e => setPriceMemo(e.target.value)} />
+            </div>
+            <div>
+              <label htmlFor="recommendReason">추천이유</label>
+              <textarea
+                id="recommendReason"
+                value={recommendReason}
+                onChange={e => setRecommendReason(e.target.value)}
+                placeholder="이 가게를 추천하는 이유"
+                maxLength={500}
+              />
+              <p className="mt-1 text-xs text-zinc-500">{recommendReason.length} / 500</p>
             </div>
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
             <button type="submit" disabled={submitting} className="btn">
