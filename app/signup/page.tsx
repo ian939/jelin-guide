@@ -1,6 +1,7 @@
 'use client'
 
 import { signIn } from 'next-auth/react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -89,6 +90,12 @@ export default function SignupPage() {
           {loading ? '입장 중…' : '위키 입장하기'}
         </button>
       </form>
+      <p className="mt-6 text-center text-sm text-zinc-500">
+        기존 닉네임이 있으세요?{' '}
+        <Link href="/login" className="text-accent">
+          로그인 페이지로
+        </Link>
+      </p>
     </main>
   )
 }
