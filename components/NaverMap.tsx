@@ -129,6 +129,8 @@ export function NaverMap({
         existing.setPosition(pos)
         continue
       }
+      // 카테고리별 마커 이모지 — 카페는 ☕, 나머지는 🍴
+      const emoji = m.category === '카페' ? '☕' : '🍴'
       const marker = new naver.maps.Marker({
         position: pos,
         map: mapInstance.current,
@@ -154,7 +156,7 @@ export function NaverMap({
                   line-height: 1;
                   box-shadow: 0 3px 8px rgba(31, 107, 255, 0.25), 0 1px 3px rgba(0,0,0,0.15);
                   cursor: pointer;
-                ">🍴</div>
+                ">${emoji}</div>
               `,
               anchor: new naver.maps.Point(16, 16),
             },
