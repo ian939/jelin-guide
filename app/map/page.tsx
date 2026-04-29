@@ -11,8 +11,10 @@ import {
   CATEGORIES,
   CATEGORY_LABEL,
   MEAL_TYPES,
+  PLACE_TAGS,
   type CategoryCode,
   type MealTypeCode,
+  type PlaceTag,
 } from '@/lib/validators/place'
 
 type ListItem = {
@@ -42,12 +44,14 @@ function Inner() {
 
   const [items, setItems] = useState<ListItem[]>([])
   const [selected, setSelected] = useState<Set<CategoryCode>>(new Set())
+  const [tagFilter, setTagFilter] = useState<Set<PlaceTag>>(new Set())
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const qs = new URLSearchParams()
     qs.set('mealType', mealType)
     selected.forEach(c => qs.append('category', c))
+    tagFilter.forEach(t => qs.append('tag', t))
     setLoading(true)
     fetch(`/api/places?${qs.toString()}&pageSize=50`)
       .then(r => r.json())
@@ -65,7 +69,7 @@ function Inner() {
         )
         setLoading(false)
       })
-  }, [selected, mealType])
+  }, [selected, tagFilter, mealType])
 
   const markers: MapMarker[] = useMemo(
     () =>
@@ -87,6 +91,12 @@ function Inner() {
     setSelected(next)
   }
 
+  function toggleTag(t: PlaceTag) {
+    const next = new Set(tagFilter)
+    next.has(t) ? next.delete(t) : next.add(t)
+    setTagFilter(next)
+  }
+
   return (
     <>
       <Header />
@@ -104,9 +114,22 @@ function Inner() {
       </div>
       <NaverMap markers={markers} heightClass="h-[38vh]" />
       <main className="px-4 pb-24">
-        <p className="my-3 text-xs text-zinc-500">
-          {loading ? '불러오는 중…' : `${items.length}곳 표시 중 · 마커 50개 이상은 작은 점으로 표시`}
-        </p>
+        <div className="my-3">
+          <p className="text-xs text-zinc-500">
+            {loading ? '불러오는 중…' : `${items.length}곳 표시 중 · 마커 50개 이상은 작은 점으로 표시`}
+          </p>
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+            {PLACE_TAGS.map(t => (
+              <button
+                key={t}
+                onClick={() => toggleTag(t)}
+                className={`chip shrink-0 ${tagFilter.has(t) ? 'chip-active' : ''}`}
+              >
+                #{t}
+              </button>
+            ))}
+          </div>
+        </div>
         <ul className="space-y-2">
           {items.map(p => (
             <li id={`item-${p.id}`} key={p.id}>

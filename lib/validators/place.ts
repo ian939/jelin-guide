@@ -71,6 +71,7 @@ export const placeFilterSchema = z.object({
   q: z.string().optional(),
   categories: z.array(z.enum(CATEGORIES)).optional(),
   mealType: z.enum(MEAL_TYPES).optional(),
+  tags: z.array(z.enum(PLACE_TAGS)).optional(),
   minAvg: z.coerce.number().min(0).max(5).optional(),
   minReviews: z.coerce.number().int().min(0).optional(),
   sort: z.enum(['popular', 'recent', 'distance', 'review', 'rating']).optional(),

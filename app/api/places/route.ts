@@ -9,10 +9,12 @@ import { placeFilterSchema, placeSubmitSchema } from '@/lib/validators/place'
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const rawCategories = url.searchParams.getAll('category')
+  const rawTags = url.searchParams.getAll('tag')
   const parsed = placeFilterSchema.safeParse({
     q: url.searchParams.get('q') ?? undefined,
     categories: rawCategories.length ? rawCategories : undefined,
     mealType: url.searchParams.get('mealType') ?? undefined,
+    tags: rawTags.length ? rawTags : undefined,
     minAvg: url.searchParams.get('minAvg') ?? undefined,
     minReviews: url.searchParams.get('minReviews') ?? undefined,
     sort: url.searchParams.get('sort') ?? undefined,
@@ -22,11 +24,13 @@ export async function GET(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'VALIDATION', issues: parsed.error.flatten() }, { status: 400 })
   }
-  const { q, categories, mealType, minAvg, minReviews, sort, page = 1, pageSize = 20 } = parsed.data
+  const { q, categories, mealType, tags, minAvg, minReviews, sort, page = 1, pageSize = 20 } = parsed.data
 
   const where: Prisma.PlaceWhereInput = { isHidden: false }
   if (categories?.length) where.category = { in: categories }
   if (mealType) where.mealType = mealType
+  // 키워드 필터: 선택한 태그 중 하나라도 포함되면 매칭 (OR)
+  if (tags?.length) where.tags = { hasSome: tags }
   if (q) {
     where.OR = [
       { name: { contains: q, mode: 'insensitive' } },
