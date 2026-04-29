@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { FlashToast } from '@/components/FlashToast'
+import { OnboardingDialog } from '@/components/OnboardingDialog'
 import Providers from '@/components/SessionProvider'
 import { SwRegister } from '@/components/SwRegister'
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </div>
           <FlashToast />
           <SwRegister />
+          <OnboardingDialog />
         </Providers>
       </body>
     </html>
