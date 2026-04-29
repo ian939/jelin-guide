@@ -57,7 +57,7 @@ function Inner() {
   const [items, setItems] = useState<ListItem[]>([])
   const [selected, setSelected] = useState<Set<CategoryCode>>(new Set())
   const [tagFilter, setTagFilter] = useState<Set<PlaceTag>>(new Set())
-  const [sortKey, setSortKey] = useState<SortKey>('recent')
+  const [sortKey, setSortKey] = useState<SortKey>('rating')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
