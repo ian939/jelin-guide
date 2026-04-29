@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { recomputePlaceAggregates } from '@/lib/place-aggregates'
 import { requireSessionUser } from '@/lib/session'
 import { reviewSubmitSchema } from '@/lib/validators/review'
 
@@ -29,15 +30,19 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   }
 
   try {
-    const review = await prisma.review.create({
-      data: {
-        placeId: place.id,
-        authorId: user.id,
-        scoreTaste: parsed.data.scoreTaste,
-        scoreValue: parsed.data.scoreValue,
-        scoreAtmosphere: parsed.data.scoreAtmosphere,
-        body: parsed.data.body,
-      },
+    const review = await prisma.$transaction(async tx => {
+      const r = await tx.review.create({
+        data: {
+          placeId: place.id,
+          authorId: user.id,
+          scoreTaste: parsed.data.scoreTaste,
+          scoreValue: parsed.data.scoreValue,
+          scoreAtmosphere: parsed.data.scoreAtmosphere,
+          body: parsed.data.body,
+        },
+      })
+      await recomputePlaceAggregates(place.id, tx)
+      return r
     })
     return NextResponse.json({ review }, { status: 201 })
   } catch (e: any) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/db'
 import { geocodeAddress } from '@/lib/geocode'
+import { recomputePlaceAggregates } from '@/lib/place-aggregates'
 import { findDuplicatePlace } from '@/lib/places'
 import { requireSessionUser } from '@/lib/session'
 import { placeFilterSchema, placeSubmitSchema } from '@/lib/validators/place'
@@ -43,41 +44,24 @@ export async function GET(req: Request) {
     take: pageSize,
     skip: (page - 1) * pageSize,
     orderBy: sort === 'recent' ? { createdAt: 'desc' } : { createdAt: 'desc' },
-    include: {
-      _count: { select: { reviews: { where: { isHidden: false } } } },
-    },
   })
 
-  // 평점 평균은 별도 aggregate (1쿼리로 묶어 처리)
-  const reviewAggs = await prisma.review.groupBy({
-    by: ['placeId'],
-    where: { placeId: { in: places.map(p => p.id) }, isHidden: false },
-    _avg: { scoreTaste: true, scoreValue: true, scoreAtmosphere: true },
-  })
-  const aggMap = new Map(reviewAggs.map(a => [a.placeId, a]))
-
-  let enriched = places.map(p => {
-    const agg = aggMap.get(p.id)
-    const avg =
-      agg && agg._avg.scoreTaste !== null
-        ? ((agg._avg.scoreTaste! + agg._avg.scoreValue! + agg._avg.scoreAtmosphere!) / 3)
-        : null
-    return {
-      id: p.id,
-      name: p.name,
-      address: p.address,
-      lat: p.lat,
-      lng: p.lng,
-      category: p.category,
-      mealType: p.mealType,
-      zeropaySelfReport: p.zeropaySelfReport,
-      menuMemo: p.menuMemo,
-      priceMemo: p.priceMemo,
-      tags: p.tags ?? [],
-      reviewCount: p._count.reviews,
-      avgScore: avg,
-    }
-  })
+  // reviewCount·avgScore는 Place 캐시 컬럼에서 직접 — review groupBy 제거.
+  let enriched = places.map(p => ({
+    id: p.id,
+    name: p.name,
+    address: p.address,
+    lat: p.lat,
+    lng: p.lng,
+    category: p.category,
+    mealType: p.mealType,
+    zeropaySelfReport: p.zeropaySelfReport,
+    menuMemo: p.menuMemo,
+    priceMemo: p.priceMemo,
+    tags: p.tags ?? [],
+    reviewCount: p.reviewCount,
+    avgScore: p.avgScore,
+  }))
 
   if (typeof minAvg === 'number') enriched = enriched.filter(p => (p.avgScore ?? 0) >= minAvg)
   if (typeof minReviews === 'number') enriched = enriched.filter(p => p.reviewCount >= minReviews)
@@ -89,7 +73,15 @@ export async function GET(req: Request) {
     enriched.sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0))
   }
 
-  return NextResponse.json({ places: enriched, page, pageSize })
+  return NextResponse.json(
+    { places: enriched, page, pageSize },
+    {
+      headers: {
+        // 30초 fresh + 120초 SWR. mutation 후엔 router.refresh()로 강제 갱신.
+        'Cache-Control': 'public, max-age=30, stale-while-revalidate=120',
+      },
+    }
+  )
 }
 
 export async function POST(req: Request) {
@@ -185,6 +177,7 @@ export async function POST(req: Request) {
           body,
         },
       })
+      await recomputePlaceAggregates(created.id, tx)
     }
     return created
   })

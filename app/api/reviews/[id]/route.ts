@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { recomputePlaceAggregates } from '@/lib/place-aggregates'
 import { requireSessionUser } from '@/lib/session'
 import { reviewSubmitSchema } from '@/lib/validators/review'
 
@@ -17,9 +18,13 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: 'VALIDATION', issues: parsed.error.flatten() }, { status: 400 })
   }
 
-  const updated = await prisma.review.update({
-    where: { id: review.id },
-    data: parsed.data,
+  const updated = await prisma.$transaction(async tx => {
+    const u = await tx.review.update({
+      where: { id: review.id },
+      data: parsed.data,
+    })
+    await recomputePlaceAggregates(review.placeId, tx)
+    return u
   })
   return NextResponse.json({ review: updated })
 }
@@ -32,6 +37,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   if (!review) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
   if (review.authorId !== user.id) return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 })
 
-  await prisma.review.delete({ where: { id: review.id } })
+  await prisma.$transaction(async tx => {
+    await tx.review.delete({ where: { id: review.id } })
+    await recomputePlaceAggregates(review.placeId, tx)
+  })
   return NextResponse.json({ ok: true })
 }

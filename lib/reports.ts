@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { recomputePlaceAggregates } from '@/lib/place-aggregates'
 import { REPORT_AUTOHIDE_THRESHOLD } from '@/lib/validators/report'
 
 /**
@@ -11,10 +12,12 @@ export async function maybeAutoHide(targetType: 'REVIEW' | 'PLACE', targetId: st
   })
   if (count < REPORT_AUTOHIDE_THRESHOLD) return false
   if (targetType === 'REVIEW') {
-    await prisma.review.update({
+    const updated = await prisma.review.update({
       where: { id: targetId },
       data: { isHidden: true, hiddenAt: new Date() },
+      select: { placeId: true },
     })
+    await recomputePlaceAggregates(updated.placeId)
   } else {
     await prisma.place.update({
       where: { id: targetId },

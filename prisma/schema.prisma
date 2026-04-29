@@ -143,6 +143,10 @@ model Place {
   isHidden Boolean   @default(false) // 신고 임계 도달 시 자동 숨김
   hiddenAt DateTime?
 
+  // 리뷰 집계 캐시 — 리뷰 CRUD 시 lib/place-aggregates.ts로 갱신
+  reviewCount Int    @default(0)
+  avgScore    Float?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

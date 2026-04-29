@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
+import { recomputePlaceAggregates } from '@/lib/place-aggregates'
 
 // /api/admin/* 는 middleware의 Basic Auth로 보호됨.
 
@@ -18,7 +19,12 @@ export async function POST(req: Request) {
 
   if (action === 'restore') {
     if (targetType === 'REVIEW') {
-      await prisma.review.update({ where: { id: targetId }, data: { isHidden: false, hiddenAt: null } })
+      const r = await prisma.review.update({
+        where: { id: targetId },
+        data: { isHidden: false, hiddenAt: null },
+        select: { placeId: true },
+      })
+      await recomputePlaceAggregates(r.placeId)
     } else {
       await prisma.place.update({ where: { id: targetId }, data: { isHidden: false, hiddenAt: null } })
     }
@@ -28,7 +34,12 @@ export async function POST(req: Request) {
     })
   } else {
     if (targetType === 'REVIEW') {
+      const r = await prisma.review.findUnique({
+        where: { id: targetId },
+        select: { placeId: true },
+      })
       await prisma.review.delete({ where: { id: targetId } })
+      if (r) await recomputePlaceAggregates(r.placeId)
     } else {
       // 가맹점 영구 삭제는 위험 — 우선 isHidden 유지하고 신고만 종결.
       // 필요시 운영자가 별도 경로로 삭제.
