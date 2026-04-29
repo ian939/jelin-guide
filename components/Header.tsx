@@ -166,8 +166,8 @@ export function Header({
               ) : null}
             </>
           ) : (
-            <Link href="/login" className="text-sm font-medium text-accent">
-              로그인
+            <Link href="/signup" className="text-sm font-medium text-accent">
+              가입하기
             </Link>
           )}
         </div>

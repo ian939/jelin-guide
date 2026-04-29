@@ -13,7 +13,7 @@ import { loginSchema } from '@/lib/validators/user'
 // (스키마의 Account/Session/VerificationToken은 향후 OAuth Provider 추가 시 재활용.)
 export const authOptions: NextAuthOptions = {
   session: { strategy: 'jwt', maxAge: 60 * 60 * 24 * 30 }, // 30일
-  pages: { signIn: '/login' },
+  pages: { signIn: '/signup' },
   providers: [
     CredentialsProvider({
       name: 'credentials',

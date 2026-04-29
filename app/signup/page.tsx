@@ -1,9 +1,8 @@
 'use client'
 
 import { signIn } from 'next-auth/react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -11,6 +10,12 @@ export default function SignupPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [callbackUrl, setCallbackUrl] = useState('/')
+
+  useEffect(() => {
+    const cb = new URLSearchParams(window.location.search).get('callbackUrl')
+    if (cb) setCallbackUrl(cb)
+  }, [])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -39,7 +44,7 @@ export default function SignupPage() {
       redirect: false,
     })
     setLoading(false)
-    router.replace('/')
+    router.replace(callbackUrl)
     router.refresh()
   }
 
@@ -84,12 +89,6 @@ export default function SignupPage() {
           {loading ? '입장 중…' : '위키 입장하기'}
         </button>
       </form>
-      <p className="mt-6 text-center text-sm text-zinc-500">
-        이미 계정이 있으신가요?{' '}
-        <Link href="/login" className="text-accent">
-          로그인
-        </Link>
-      </p>
     </main>
   )
 }
