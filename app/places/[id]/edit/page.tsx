@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { AddressSearchInput } from '@/components/AddressSearchInput'
 import { Header } from '@/components/Header'
+import { MiniMap } from '@/components/MiniMap'
+import { PlaceKeywordSearch, type SearchHit } from '@/components/PlaceKeywordSearch'
 import { RequireAuth } from '@/components/RequireAuth'
 import {
   CATEGORIES,
@@ -29,8 +30,15 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // 가게 식별 정보 (이름/주소/좌표) — 검색으로 통째로 갈아끼울 수 있음
   const [name, setName] = useState('')
   const [address, setAddress] = useState('')
+  const [lat, setLat] = useState<number | null>(null)
+  const [lng, setLng] = useState<number | null>(null)
+  const [searchMode, setSearchMode] = useState(false)
+
+  // 메타
   const [category, setCategory] = useState<CategoryCode>('KOREAN')
   const [mealType, setMealType] = useState<MealTypeCode>('LUNCH')
   const [zeropaySelfReport, setZeropay] = useState(true)
@@ -46,16 +54,31 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
         if (!place) return
         setName(place.name)
         setAddress(place.address)
+        setLat(place.lat)
+        setLng(place.lng)
         setCategory(place.category)
         setMealType(place.mealType ?? 'LUNCH')
         setZeropay(place.zeropaySelfReport)
         setMenuMemo(place.menuMemo ?? '')
         setPriceMemo(place.priceMemo ?? '')
         setRecommendReason(place.recommendReason ?? '')
-        setTags((place.tags ?? []).filter((t: string) => (PLACE_TAGS as readonly string[]).includes(t)) as PlaceTag[])
+        setTags(
+          (place.tags ?? []).filter((t: string) =>
+            (PLACE_TAGS as readonly string[]).includes(t)
+          ) as PlaceTag[]
+        )
         setLoading(false)
       })
   }, [params.id])
+
+  function applyHit(hit: SearchHit) {
+    setName(hit.name)
+    setAddress(hit.roadAddress || hit.jibunAddress)
+    setLat(hit.lat)
+    setLng(hit.lng)
+    setCategory(hit.suggestedCategory)
+    setSearchMode(false)
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -64,7 +87,19 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
     const res = await fetch(`/api/places/${params.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, address, category, mealType, zeropaySelfReport, menuMemo, priceMemo, recommendReason, tags }),
+      body: JSON.stringify({
+        name,
+        address,
+        category,
+        mealType,
+        zeropaySelfReport,
+        menuMemo,
+        priceMemo,
+        recommendReason,
+        tags,
+        lat,
+        lng,
+      }),
     })
     setSubmitting(false)
     if (res.status === 401) {
@@ -95,14 +130,42 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
             <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">
               위키 스타일로 누구나 수정할 수 있습니다. 모든 변경은 이력에 기록됩니다.
             </p>
-            <div>
-              <label htmlFor="name">상호 *</label>
-              <input id="name" value={name} onChange={e => setName(e.target.value)} required />
-            </div>
-            <div>
-              <label htmlFor="address">주소 *</label>
-              <AddressSearchInput id="address" value={address} onChange={setAddress} required />
-            </div>
+
+            {/* 가게 식별: 카드 + "다른 가게로 변경" 버튼, 또는 검색 모드 */}
+            {searchMode ? (
+              <div className="space-y-3">
+                <PlaceKeywordSearch onSelect={applyHit} />
+                <button
+                  type="button"
+                  onClick={() => setSearchMode(false)}
+                  className="btn-secondary"
+                >
+                  검색 취소
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-accent bg-accent-soft p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-semibold">{name}</p>
+                      <p className="text-xs text-zinc-600">{address}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSearchMode(true)}
+                      className="shrink-0 rounded-lg bg-white px-2 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200"
+                    >
+                      다른 가게로 변경
+                    </button>
+                  </div>
+                </div>
+                {lat != null && lng != null ? (
+                  <MiniMap lat={lat} lng={lng} name={name} />
+                ) : null}
+              </div>
+            )}
+
             <div>
               <label>용도</label>
               <div className="grid grid-cols-3 gap-2">
