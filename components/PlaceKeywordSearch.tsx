@@ -29,6 +29,7 @@ export function PlaceKeywordSearch({
   const [hits, setHits] = useState<SearchHit[]>([])
   const [loading, setLoading] = useState(false)
   const [touched, setTouched] = useState(false)
+  const [authError, setAuthError] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -37,6 +38,7 @@ export function PlaceKeywordSearch({
     if (q.trim().length < 1) {
       setHits([])
       setLoading(false)
+      setAuthError(false)
       return
     }
     setLoading(true)
@@ -46,10 +48,16 @@ export function PlaceKeywordSearch({
       abortRef.current = ctrl
       try {
         const res = await fetch(`/api/place-search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal })
+        if (res.status === 401) {
+          setAuthError(true)
+          setHits([])
+          return
+        }
         if (!res.ok) {
           setHits([])
           return
         }
+        setAuthError(false)
         const { hits } = (await res.json()) as { hits: SearchHit[] }
         setHits(hits)
       } catch (e) {
@@ -82,6 +90,10 @@ export function PlaceKeywordSearch({
 
       {loading ? (
         <p className="mt-3 text-sm text-zinc-500">검색 중…</p>
+      ) : authError ? (
+        <p className="mt-3 text-sm text-amber-700">
+          로그인이 필요합니다. 새로고침 후 로그인해 주세요.
+        </p>
       ) : hits.length === 0 ? (
         touched && q.trim().length > 0 ? (
           <p className="mt-3 text-sm text-zinc-500">검색 결과가 없어요. 가게 이름을 다시 확인해 주세요.</p>

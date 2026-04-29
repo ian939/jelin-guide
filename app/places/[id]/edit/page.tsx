@@ -121,7 +121,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
 
   return (
     <>
-      <Header title="가맹점 정보 수정" back={`/places/${params.id}`} />
+      <Header title="정보 수정" back={`/places/${params.id}`} />
       <main className="px-5 py-6">
         {loading ? (
           <p className="text-sm text-zinc-500">불러오는 중…</p>
