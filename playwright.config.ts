@@ -7,6 +7,8 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   reporter: 'list',
+  // 모든 테스트 종료 후 e2e_*/editor_* 닉으로 만든 데이터 자동 정리
+  globalTeardown: './e2e/global-teardown.ts',
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
     trace: 'on-first-retry',

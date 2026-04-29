@@ -40,6 +40,18 @@ export function NaverMap({
   const skPinRef = useRef<any>(null)
   const [ready, setReady] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // hover delay: 마커/카드를 잠깐 벗어나도 즉시 안 닫히고 짧은 grace period
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function cancelClose() {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current)
+      closeTimerRef.current = null
+    }
+  }
+  function scheduleClose() {
+    cancelClose()
+    closeTimerRef.current = setTimeout(() => setSelectedId(null), 150)
+  }
 
   // ── effect 1: 지도 init (1회만) + SK 핀
   useEffect(() => {
@@ -148,12 +160,17 @@ export function NaverMap({
             },
       })
       naver.maps.Event.addListener(marker, 'click', () => {
+        cancelClose()
         setSelectedId(m.id)
         onMarkerClick?.(m.id)
       })
-      // PC 호버 시에도 자동 노출 (모바일은 mouseover 미발생이라 click과 동일)
+      // PC hover: 마커 위 → 카드 노출, 마커 벗어남 → 짧은 grace 후 닫힘 (카드로 이동 시 cancel)
       naver.maps.Event.addListener(marker, 'mouseover', () => {
+        cancelClose()
         setSelectedId(m.id)
+      })
+      naver.maps.Event.addListener(marker, 'mouseout', () => {
+        scheduleClose()
       })
       markerCache.current.set(m.id, marker)
     }
@@ -188,7 +205,11 @@ export function NaverMap({
         </button>
         {selectedMarker ? (
           <div className="pointer-events-none absolute inset-x-3 bottom-3 z-10">
-            <div className="pointer-events-auto rounded-2xl bg-white p-3 shadow-xl ring-1 ring-zinc-200">
+            <div
+              className="pointer-events-auto rounded-2xl bg-white p-3 shadow-xl ring-1 ring-zinc-200"
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-base font-semibold">{selectedMarker.name}</p>
