@@ -86,6 +86,18 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
           {place.priceMemo ? (
             <p className="text-sm text-zinc-600">💸 {place.priceMemo}</p>
           ) : null}
+          {place.tags && place.tags.length > 0 ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {place.tags.map(t => (
+                <span
+                  key={t}
+                  className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[11px] font-medium text-zinc-700"
+                >
+                  #{t}
+                </span>
+              ))}
+            </div>
+          ) : null}
           {place.recommendReason ? (
             <div className="mt-3 rounded-xl bg-accent-soft p-3">
               <p className="text-xs font-semibold text-accent">💬 추천이유</p>

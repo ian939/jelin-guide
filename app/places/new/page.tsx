@@ -6,13 +6,16 @@ import { Header } from '@/components/Header'
 import { MiniMap } from '@/components/MiniMap'
 import { PlaceKeywordSearch, type SearchHit } from '@/components/PlaceKeywordSearch'
 import { RequireAuth } from '@/components/RequireAuth'
+import { StarSelect } from '@/components/Stars'
 import {
   CATEGORIES,
   CATEGORY_LABEL,
   MEAL_TYPES,
   MEAL_TYPE_LABEL,
+  PLACE_TAGS,
   type CategoryCode,
   type MealTypeCode,
+  type PlaceTag,
 } from '@/lib/validators/place'
 
 export default function NewPlacePage() {
@@ -37,6 +40,10 @@ function NewPlaceForm() {
   const [menuMemo, setMenuMemo] = useState('')
   const [priceMemo, setPriceMemo] = useState('')
   const [recommendReason, setRecommendReason] = useState('')
+  const [tags, setTags] = useState<PlaceTag[]>([])
+  const [scoreTaste, setScoreTaste] = useState(4)
+  const [scoreValue, setScoreValue] = useState(4)
+  const [scoreAtmosphere, setScoreAtmosphere] = useState(4)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -82,6 +89,10 @@ function NewPlaceForm() {
         menuMemo,
         priceMemo,
         recommendReason,
+        tags,
+        scoreTaste,
+        scoreValue,
+        scoreAtmosphere,
         lat,
         lng,
       }),
@@ -219,6 +230,37 @@ function NewPlaceForm() {
                   placeholder="예: 1만원대"
                   maxLength={60}
                 />
+              </div>
+              <div>
+                <label>이 가게에 대한 평점 *</label>
+                <div className="card space-y-3">
+                  <StarSelect label="맛" value={scoreTaste} onChange={setScoreTaste} />
+                  <StarSelect label="가성비" value={scoreValue} onChange={setScoreValue} />
+                  <StarSelect label="분위기" value={scoreAtmosphere} onChange={setScoreAtmosphere} />
+                </div>
+                <p className="mt-1 text-xs text-zinc-500">
+                  추천하면서 첫 리뷰가 같이 등록됩니다. 정말 좋다면 ★ 5점 (빨강).
+                </p>
+              </div>
+              <div>
+                <label>키워드 (선택, 다중 선택)</label>
+                <div className="flex flex-wrap gap-2">
+                  {PLACE_TAGS.map(t => {
+                    const active = tags.includes(t)
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() =>
+                          setTags(prev => (active ? prev.filter(x => x !== t) : [...prev, t]))
+                        }
+                        className={`chip ${active ? 'chip-active' : ''}`}
+                      >
+                        {t}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
               <div>
                 <label htmlFor="recommendReason">추천이유 (선택)</label>

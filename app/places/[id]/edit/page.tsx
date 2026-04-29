@@ -10,8 +10,10 @@ import {
   CATEGORY_LABEL,
   MEAL_TYPES,
   MEAL_TYPE_LABEL,
+  PLACE_TAGS,
   type CategoryCode,
   type MealTypeCode,
+  type PlaceTag,
 } from '@/lib/validators/place'
 
 export default function EditPlacePage(props: { params: { id: string } }) {
@@ -35,6 +37,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
   const [menuMemo, setMenuMemo] = useState('')
   const [priceMemo, setPriceMemo] = useState('')
   const [recommendReason, setRecommendReason] = useState('')
+  const [tags, setTags] = useState<PlaceTag[]>([])
 
   useEffect(() => {
     fetch(`/api/places/${params.id}`)
@@ -49,6 +52,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
         setMenuMemo(place.menuMemo ?? '')
         setPriceMemo(place.priceMemo ?? '')
         setRecommendReason(place.recommendReason ?? '')
+        setTags((place.tags ?? []).filter((t: string) => (PLACE_TAGS as readonly string[]).includes(t)) as PlaceTag[])
         setLoading(false)
       })
   }, [params.id])
@@ -60,7 +64,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
     const res = await fetch(`/api/places/${params.id}`, {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, address, category, mealType, zeropaySelfReport, menuMemo, priceMemo, recommendReason }),
+      body: JSON.stringify({ name, address, category, mealType, zeropaySelfReport, menuMemo, priceMemo, recommendReason, tags }),
     })
     setSubmitting(false)
     if (res.status === 401) {
@@ -148,6 +152,26 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
             <div>
               <label htmlFor="priceMemo">가격대</label>
               <input id="priceMemo" value={priceMemo} onChange={e => setPriceMemo(e.target.value)} />
+            </div>
+            <div>
+              <label>키워드</label>
+              <div className="flex flex-wrap gap-2">
+                {PLACE_TAGS.map(t => {
+                  const active = tags.includes(t)
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() =>
+                        setTags(prev => (active ? prev.filter(x => x !== t) : [...prev, t]))
+                      }
+                      className={`chip ${active ? 'chip-active' : ''}`}
+                    >
+                      {t}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
             <div>
               <label htmlFor="recommendReason">추천이유</label>

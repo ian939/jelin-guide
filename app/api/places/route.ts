@@ -139,6 +139,7 @@ export async function POST(req: Request) {
         menuMemo: data.menuMemo || null,
         priceMemo: data.priceMemo || null,
         recommendReason: data.recommendReason || null,
+        tags: data.tags ?? [],
         createdById: user.id,
       },
     })
@@ -155,9 +156,31 @@ export async function POST(req: Request) {
         menuMemo: created.menuMemo,
         priceMemo: created.priceMemo,
         recommendReason: created.recommendReason,
+        tags: created.tags,
         editorId: user.id,
       },
     })
+    // 추천자 본인의 첫 평점이 같이 들어오면 첫 Review로 등록.
+    if (
+      data.scoreTaste != null &&
+      data.scoreValue != null &&
+      data.scoreAtmosphere != null
+    ) {
+      const body =
+        (data.recommendReason && data.recommendReason.trim().length >= 10)
+          ? data.recommendReason
+          : `${data.name}을(를) 동료에게 추천합니다.`
+      await tx.review.create({
+        data: {
+          placeId: created.id,
+          authorId: user.id,
+          scoreTaste: data.scoreTaste,
+          scoreValue: data.scoreValue,
+          scoreAtmosphere: data.scoreAtmosphere,
+          body,
+        },
+      })
+    }
     return created
   })
 

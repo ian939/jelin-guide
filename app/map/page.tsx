@@ -1,11 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { MealTypeTabs } from '@/components/MealTypeTabs'
 import { NaverMap, type MapMarker } from '@/components/NaverMap'
 import { Stars } from '@/components/Stars'
-import { CATEGORIES, CATEGORY_LABEL, type CategoryCode } from '@/lib/validators/place'
+import {
+  CATEGORIES,
+  CATEGORY_LABEL,
+  MEAL_TYPES,
+  type CategoryCode,
+  type MealTypeCode,
+} from '@/lib/validators/place'
 
 type ListItem = {
   id: string
@@ -18,15 +26,30 @@ type ListItem = {
 }
 
 export default function MapPage() {
+  return (
+    <Suspense fallback={null}>
+      <Inner />
+    </Suspense>
+  )
+}
+
+function Inner() {
+  const params = useSearchParams()
+  const mealParam = params.get('mealType')
+  const mealType: MealTypeCode = MEAL_TYPES.includes(mealParam as MealTypeCode)
+    ? (mealParam as MealTypeCode)
+    : 'LUNCH'
+
   const [items, setItems] = useState<ListItem[]>([])
   const [selected, setSelected] = useState<Set<CategoryCode>>(new Set())
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const params = new URLSearchParams()
-    selected.forEach(c => params.append('category', c))
+    const qs = new URLSearchParams()
+    qs.set('mealType', mealType)
+    selected.forEach(c => qs.append('category', c))
     setLoading(true)
-    fetch(`/api/places?${params.toString()}&pageSize=50`)
+    fetch(`/api/places?${qs.toString()}&pageSize=50`)
       .then(r => r.json())
       .then(({ places }) => {
         setItems(
@@ -42,7 +65,7 @@ export default function MapPage() {
         )
         setLoading(false)
       })
-  }, [selected])
+  }, [selected, mealType])
 
   const markers: MapMarker[] = useMemo(
     () =>
@@ -66,7 +89,8 @@ export default function MapPage() {
 
   return (
     <>
-      <Header title="지도" />
+      <Header />
+      <MealTypeTabs />
       <div className="flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none]">
         {CATEGORIES.map(c => (
           <button
@@ -78,13 +102,7 @@ export default function MapPage() {
           </button>
         ))}
       </div>
-      <NaverMap
-        markers={markers}
-        onMarkerClick={id => {
-          const el = document.getElementById(`item-${id}`)
-          el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }}
-      />
+      <NaverMap markers={markers} heightClass="h-[38vh]" />
       <main className="px-4 pb-24">
         <p className="my-3 text-xs text-zinc-500">
           {loading ? '불러오는 중…' : `${items.length}곳 표시 중 · 마커 50개 이상은 작은 점으로 표시`}

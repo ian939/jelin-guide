@@ -23,11 +23,14 @@ export function NaverMap({
   onViewportChange,
   // 기본 중심: 서울특별시 강남구 논현동 85-9 (논현로132길 43)
   initialCenter = { lat: 37.5159083, lng: 127.0339653 },
+  heightClass = 'h-[42vh]',
 }: {
   markers: MapMarker[]
   onMarkerClick?: (id: string) => void
   onViewportChange?: (bbox: { minLat: number; maxLat: number; minLng: number; maxLng: number }) => void
   initialCenter?: { lat: number; lng: number }
+  /** Tailwind 높이 클래스. 기본 42vh — 모바일에서 적당히 보이게. */
+  heightClass?: string
 }) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
@@ -169,7 +172,7 @@ export function NaverMap({
         onReady={() => setReady(true)}
       />
       <div className="relative">
-        <div ref={mapRef} className="h-[60vh] w-full" />
+        <div ref={mapRef} className={`${heightClass} w-full`} />
         <button
           type="button"
           onClick={recenter}

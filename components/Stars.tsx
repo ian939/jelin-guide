@@ -18,6 +18,8 @@ export function StarSelect({
   value: number
   onChange: (v: number) => void
 }) {
+  // value === 5 일 때 활성 별을 빨간색으로 — "정말 좋다"의 강조
+  const activeColor = value >= 5 ? 'text-red-500' : 'text-amber-500'
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-zinc-600">{label}</span>
@@ -27,7 +29,7 @@ export function StarSelect({
             type="button"
             key={n}
             onClick={() => onChange(n)}
-            className={n <= value ? 'text-amber-500 text-xl' : 'text-zinc-300 text-xl'}
+            className={`text-xl ${n <= value ? activeColor : 'text-zinc-300'}`}
             aria-label={`${label} ${n}점`}
           >
             ★

@@ -31,6 +31,21 @@ export const MEAL_TYPE_LABEL: Record<MealTypeCode, string> = {
   OTHER: '기타',
 }
 
+// 추천 시 사용자가 선택할 수 있는 키워드 (multi-select).
+export const PLACE_TAGS = [
+  '도보 5분',
+  '도보 10분',
+  '손님과 함께',
+  '웨이팅',
+  '혼밥',
+  '가성비',
+  '분위기 좋음',
+  '조용함',
+  '단체 가능',
+  '주차 가능',
+] as const
+export type PlaceTag = (typeof PLACE_TAGS)[number]
+
 export const placeSubmitSchema = z.object({
   name: z.string().trim().min(1, '상호를 입력하세요.').max(80),
   address: z.string().trim().min(2, '주소를 입력하세요.').max(200),
@@ -40,6 +55,11 @@ export const placeSubmitSchema = z.object({
   menuMemo: z.string().trim().max(120).optional().or(z.literal('')),
   priceMemo: z.string().trim().max(60).optional().or(z.literal('')),
   recommendReason: z.string().trim().max(500).optional().or(z.literal('')),
+  tags: z.array(z.enum(PLACE_TAGS)).max(8).default([]),
+  // 추천 시점에 본인의 첫 평점 (선택). 추천자가 곧 첫 리뷰어가 됨.
+  scoreTaste: z.number().int().min(1).max(5).optional(),
+  scoreValue: z.number().int().min(1).max(5).optional(),
+  scoreAtmosphere: z.number().int().min(1).max(5).optional(),
   // 카카오 검색에서 받은 좌표 — 있으면 신뢰, 없으면 Geocoding fallback
   lat: z.number().min(-90).max(90).optional().nullable(),
   lng: z.number().min(-180).max(180).optional().nullable(),

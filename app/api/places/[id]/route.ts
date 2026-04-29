@@ -78,6 +78,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         menuMemo: data.menuMemo || null,
         priceMemo: data.priceMemo || null,
         recommendReason: data.recommendReason || null,
+        tags: data.tags ?? [],
       },
     })
     await tx.placeRevision.create({
@@ -93,6 +94,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
         menuMemo: u.menuMemo,
         priceMemo: u.priceMemo,
         recommendReason: u.recommendReason,
+        tags: u.tags,
         editorId: user.id,
       },
     })

@@ -55,8 +55,9 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   const errors: string[] = []
   attachConsoleListeners(page, errors)
 
-  // 1. 홈 진입 (부트스트랩 모드 또는 큐레이션)
+  // 1. 홈 진입 — 첫 화면은 /map 으로 redirect
   await page.goto('/')
+  await page.waitForURL(/\/map/, { timeout: 15_000 })
   await expect(page.getByRole('link', { name: /제슐렝가이드/ })).toBeVisible()
 
   // 2. 가입
@@ -64,9 +65,10 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   await page.getByLabel(/닉네임/).fill(NICK)
   await page.getByLabel(/비밀번호/).fill(PWD)
   await page.getByRole('button', { name: /가입하고 시작하기/ }).click()
-  await page.waitForURL('/', { timeout: 15_000 })
-  // 헤더에 닉네임 표시 (자동 로그인)
-  await expect(page.getByRole('link', { name: NICK })).toBeVisible({ timeout: 10_000 })
+  // 가입 성공 → / → redirect → /map
+  await page.waitForURL(/\/map/, { timeout: 15_000 })
+  // 헤더에 닉네임이 보임 (햄버거 토글 버튼)
+  await expect(page.getByRole('button', { name: new RegExp(NICK) })).toBeVisible({ timeout: 10_000 })
 
   // 3. 맛집 추천 — 카카오 키워드 검색 → 첫 결과 선택 → 폼 자동 채움
   await page.goto('/places/new')
@@ -96,21 +98,12 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   }
   await expect(page.getByText(/제로페이/).first()).toBeVisible()
 
-  // 5. 리뷰 작성
-  await page.getByRole('link', { name: /리뷰 쓰기/ }).click()
-  await page.waitForURL(/\/reviews\/new(\?.*)?$/)
-  // StarSelect: 5점 = 마지막 별 클릭
-  for (const label of ['맛', '가성비', '분위기']) {
-    const row = page.getByText(label, { exact: true }).locator('..').locator('..')
-    const stars = row.getByRole('button', { name: new RegExp(`${label} 5점`) })
-    await stars.click()
-  }
-  await page.getByLabel(/한마디/).fill('테스트 리뷰입니다. 맛 좋음.')
-  await page.getByRole('button', { name: /리뷰 등록/ }).click()
-  await page.waitForURL(/\/places\/[a-z0-9]+(\?.*)?$/, { timeout: 15_000 })
+  // 5. 추천 시 첫 리뷰가 자동 생성됨 — "내 리뷰 수정" 버튼이 보이고 "리뷰 쓰기"는 없음.
+  // 평점은 default 4점이라 평균 4.0 / 리뷰 1.
 
-  // 6. 가맹점 상세에서 평균 평점 노출 확인
+  // 6. 가맹점 상세에서 리뷰 1 노출 확인
   await expect(page.getByRole('heading', { name: /^리뷰 1$/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /내 리뷰 수정/ })).toBeVisible()
 
   // 7. 마이페이지에서 내 추천·리뷰 확인
   await page.goto('/mypage')
@@ -133,7 +126,7 @@ test('지도 페이지 — 마커·SK일렉링크 리센터·추천 FAB', async 
   const errors: string[] = []
   attachConsoleListeners(page, errors)
   await page.goto('/map')
-  await expect(page.getByRole('heading', { name: /지도/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /제슐렝가이드/ })).toBeVisible()
 
   // SK일렉링크 리센터 버튼이 지도 위에 노출
   await expect(page.getByRole('button', { name: /SK일렉링크/ })).toBeVisible()

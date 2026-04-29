@@ -35,6 +35,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         menuMemo: target.menuMemo,
         priceMemo: target.priceMemo,
         recommendReason: target.recommendReason,
+        tags: target.tags ?? [],
       },
     })
     await tx.placeRevision.create({
@@ -50,6 +51,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         menuMemo: u.menuMemo,
         priceMemo: u.priceMemo,
         recommendReason: u.recommendReason,
+        tags: u.tags,
         editorId: user.id,
       },
     })

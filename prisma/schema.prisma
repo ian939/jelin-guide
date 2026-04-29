@@ -135,6 +135,7 @@ model Place {
   menuMemo          String? // 대표 메뉴
   priceMemo         String? // 가격대
   recommendReason   String? // 추천이유 (선택, 자유 텍스트)
+  tags              String[] @default([]) // 키워드 (도보 5분, 혼밥 가능 등)
 
   createdById String
   createdBy   User   @relation("PlaceCreator", fields: [createdById], references: [id])
@@ -173,6 +174,7 @@ model PlaceRevision {
   menuMemo          String?
   priceMemo         String?
   recommendReason   String?
+  tags              String[] @default([])
 
   editorId String
   editor   User   @relation("PlaceEditor", fields: [editorId], references: [id])
