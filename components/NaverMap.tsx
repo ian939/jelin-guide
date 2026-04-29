@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import Script from 'next/script'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
 const CLUSTER_THRESHOLD = 50
@@ -33,6 +34,7 @@ export function NaverMap({
   /** Tailwind 높이 클래스. 기본 42vh — 모바일에서 적당히 보이게. */
   heightClass?: string
 }) {
+  const router = useRouter()
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<any>(null)
   // id → naver Marker 캐시 (incremental upsert)
@@ -40,6 +42,13 @@ export function NaverMap({
   const skPinRef = useRef<any>(null)
   const [ready, setReady] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  // 이미 prefetch한 id — 중복 prefetch 방지
+  const prefetched = useRef<Set<string>>(new Set())
+  function maybePrefetch(id: string) {
+    if (prefetched.current.has(id)) return
+    prefetched.current.add(id)
+    router.prefetch(`/places/${id}`)
+  }
   // hover delay: 마커/카드를 잠깐 벗어나도 즉시 안 닫히고 짧은 grace period
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   function cancelClose() {
@@ -164,12 +173,14 @@ export function NaverMap({
       naver.maps.Event.addListener(marker, 'click', () => {
         cancelClose()
         setSelectedId(m.id)
+        maybePrefetch(m.id)
         onMarkerClick?.(m.id)
       })
       // PC hover: 마커 위 → 카드 노출, 마커 벗어남 → 짧은 grace 후 닫힘 (카드로 이동 시 cancel)
       naver.maps.Event.addListener(marker, 'mouseover', () => {
         cancelClose()
         setSelectedId(m.id)
+        maybePrefetch(m.id)
       })
       naver.maps.Event.addListener(marker, 'mouseout', () => {
         scheduleClose()

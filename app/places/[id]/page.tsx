@@ -11,33 +11,31 @@ import { CATEGORY_LABEL, MEAL_TYPE_LABEL } from '@/lib/validators/place'
 export const dynamic = 'force-dynamic'
 
 export default async function PlaceDetailPage({ params }: { params: { id: string } }) {
-  const place = await prisma.place.findUnique({
-    where: { id: params.id },
-    include: {
-      createdBy: { select: { nickname: true } },
-      reviews: {
-        where: { isHidden: false },
-        orderBy: { createdAt: 'desc' },
-        include: { author: { select: { nickname: true } } },
-        take: 50,
-      },
-    },
-  })
-  if (!place || place.isHidden) notFound()
-
-  const [scoreAgg, voteCounts, me] = await Promise.all([
+  // 5개 쿼리 모두 병렬 — sequential이면 latency × 2. 가장 느린 쿼리 시간으로 수렴.
+  const [place, reviews, scoreAgg, voteCounts, me] = await Promise.all([
+    prisma.place.findUnique({
+      where: { id: params.id },
+      include: { createdBy: { select: { nickname: true } } },
+    }),
+    prisma.review.findMany({
+      where: { placeId: params.id, isHidden: false },
+      orderBy: { createdAt: 'desc' },
+      include: { author: { select: { nickname: true } } },
+      take: 50,
+    }),
     prisma.review.aggregate({
-      where: { placeId: place.id, isHidden: false },
+      where: { placeId: params.id, isHidden: false },
       _avg: { scoreTaste: true, scoreValue: true, scoreAtmosphere: true },
       _count: true,
     }),
     prisma.zeropayVote.groupBy({
       by: ['isAvailable'],
-      where: { placeId: place.id },
+      where: { placeId: params.id },
       _count: true,
     }),
     getSessionUser(),
   ])
+  if (!place || place.isHidden) notFound()
 
   const yes = voteCounts.find(v => v.isAvailable)?._count ?? 0
   const no = voteCounts.find(v => !v.isAvailable)?._count ?? 0
@@ -58,7 +56,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
         3
       : null
 
-  const myReview = me ? place.reviews.find(r => r.authorId === me.id) : null
+  const myReview = me ? reviews.find(r => r.authorId === me.id) : null
 
   return (
     <>
@@ -147,11 +145,11 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
 
         <section className="mt-8">
           <h2 className="mb-3 text-base font-bold">리뷰 {scoreAgg._count}</h2>
-          {place.reviews.length === 0 ? (
+          {reviews.length === 0 ? (
             <p className="text-sm text-zinc-500">아직 리뷰가 없어요. 첫 리뷰를 남겨보세요.</p>
           ) : (
             <ul className="space-y-3">
-              {place.reviews.map(r => {
+              {reviews.map(r => {
                 const ravg = (r.scoreTaste + r.scoreValue + r.scoreAtmosphere) / 3
                 const isMine = me?.id === r.authorId
                 return (
