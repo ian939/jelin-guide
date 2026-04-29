@@ -4,7 +4,7 @@ import { FlashToast } from '@/components/FlashToast'
 import Providers from '@/components/SessionProvider'
 
 export const metadata: Metadata = {
-  title: '제슐렝가이드',
+  title: '학동위키',
   description: '제로페이 가맹 맛집을 동료가 직접 추천·평가하는 가이드',
   viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
 }
