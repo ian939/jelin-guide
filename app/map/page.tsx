@@ -61,16 +61,21 @@ function Inner() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const ctrl = new AbortController()
     const qs = new URLSearchParams()
     qs.set('mealType', mealType)
     selected.forEach(c => qs.append('category', c))
     tagFilter.forEach(t => qs.append('tag', t))
     setLoading(true)
-    fetch(`/api/places?${qs.toString()}&pageSize=50`)
-      .then(r => r.json())
-      .then(({ places }) => {
+    fetch(`/api/places?${qs.toString()}&pageSize=50`, { signal: ctrl.signal })
+      .then(async r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        return r.json()
+      })
+      .then((json: { places?: any[] }) => {
+        const list = json.places ?? []
         setItems(
-          places.map((p: any) => ({
+          list.map(p => ({
             id: p.id,
             name: p.name,
             lat: p.lat,
@@ -82,6 +87,14 @@ function Inner() {
         )
         setLoading(false)
       })
+      .catch(err => {
+        // navigation/cleanup으로 abort된 fetch는 무시 — finally도 호출 안 함 (아래에서 ignore)
+        if (err?.name === 'AbortError') return
+        // 그 외 네트워크 실패: 빈 리스트로 폴백 (사용자 영향 최소화)
+        setItems([])
+        setLoading(false)
+      })
+    return () => ctrl.abort()
   }, [selected, tagFilter, mealType])
 
   // 정렬: client-side에 적용 (server는 'recent' 기본)

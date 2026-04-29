@@ -65,7 +65,7 @@ export function ProposalFab() {
 
       {open ? (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-black/40"
+          className="fixed inset-0 z-[100] flex items-end bg-black/40"
           onClick={close}
           role="dialog"
           aria-modal="true"

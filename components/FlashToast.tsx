@@ -49,7 +49,7 @@ function Inner() {
 
   if (!visible || !message) return null
   return (
-    <div className="pointer-events-none fixed left-1/2 top-16 z-50 -translate-x-1/2 px-4">
+    <div className="pointer-events-none fixed left-1/2 top-16 z-[110] -translate-x-1/2 px-4">
       <div className="pointer-events-auto rounded-2xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white shadow-xl">
         {message}
       </div>

@@ -171,7 +171,7 @@ export function NaverMap({
         strategy="afterInteractive"
         onReady={() => setReady(true)}
       />
-      <div className="relative">
+      <div className="relative isolate">
         <div ref={mapRef} className={`${heightClass} w-full`} />
         <button
           type="button"

@@ -56,7 +56,7 @@ export function PlaceFilters() {
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/40">
+        <div className="fixed inset-0 z-[100] flex items-end bg-black/40">
           <form
             action={applyAdvanced}
             className="w-full rounded-t-3xl bg-white p-5 pb-8 max-w-mobile mx-auto"
