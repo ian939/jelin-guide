@@ -7,6 +7,7 @@ import { Header } from '@/components/Header'
 import { MealTypeTabs } from '@/components/MealTypeTabs'
 import { NaverMap, type MapMarker } from '@/components/NaverMap'
 import { Stars } from '@/components/Stars'
+import { haversineMeters } from '@/lib/places'
 import {
   CATEGORIES,
   CATEGORY_LABEL,
@@ -27,6 +28,17 @@ type ListItem = {
   avgScore: number | null
 }
 
+// SK일렉링크 본사 — 거리순 기준점
+const HOME_LAT = 37.5159083
+const HOME_LNG = 127.0339653
+
+type SortKey = 'recent' | 'distance' | 'rating'
+const SORT_LABEL: Record<SortKey, string> = {
+  recent: '최신',
+  distance: '가까운 순',
+  rating: '평점 높은 순',
+}
+
 export default function MapPage() {
   return (
     <Suspense fallback={null}>
@@ -45,6 +57,7 @@ function Inner() {
   const [items, setItems] = useState<ListItem[]>([])
   const [selected, setSelected] = useState<Set<CategoryCode>>(new Set())
   const [tagFilter, setTagFilter] = useState<Set<PlaceTag>>(new Set())
+  const [sortKey, setSortKey] = useState<SortKey>('recent')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -71,9 +84,24 @@ function Inner() {
       })
   }, [selected, tagFilter, mealType])
 
+  // 정렬: client-side에 적용 (server는 'recent' 기본)
+  const sortedItems = useMemo(() => {
+    const arr = [...items]
+    if (sortKey === 'distance') {
+      arr.sort(
+        (a, b) =>
+          haversineMeters({ lat: HOME_LAT, lng: HOME_LNG }, a) -
+          haversineMeters({ lat: HOME_LAT, lng: HOME_LNG }, b)
+      )
+    } else if (sortKey === 'rating') {
+      arr.sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1))
+    }
+    return arr
+  }, [items, sortKey])
+
   const markers: MapMarker[] = useMemo(
     () =>
-      items.map(({ id, name, lat, lng, category, avgScore, reviewCount }) => ({
+      sortedItems.map(({ id, name, lat, lng, category, avgScore, reviewCount }) => ({
         id,
         name,
         lat,
@@ -82,7 +110,7 @@ function Inner() {
         avgScore,
         reviewCount,
       })),
-    [items]
+    [sortedItems]
   )
 
   function toggle(c: CategoryCode) {
@@ -115,9 +143,26 @@ function Inner() {
       <NaverMap markers={markers} heightClass="h-[38vh]" />
       <main className="px-4 pb-24">
         <div className="my-3">
-          <p className="text-xs text-zinc-500">
-            {loading ? '불러오는 중…' : `${items.length}곳 표시 중 · 마커 50개 이상은 작은 점으로 표시`}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-zinc-500">
+              {loading ? '불러오는 중…' : `${sortedItems.length}곳 표시 중`}
+            </p>
+            <div className="flex gap-1">
+              {(['recent', 'distance', 'rating'] as SortKey[]).map(k => (
+                <button
+                  key={k}
+                  onClick={() => setSortKey(k)}
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium transition ${
+                    sortKey === k
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                  }`}
+                >
+                  {SORT_LABEL[k]}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
             {PLACE_TAGS.map(t => (
               <button
@@ -131,7 +176,7 @@ function Inner() {
           </div>
         </div>
         <ul className="space-y-2">
-          {items.map(p => (
+          {sortedItems.map(p => (
             <li id={`item-${p.id}`} key={p.id}>
               <Link href={`/places/${p.id}`} className="card flex items-center justify-between text-sm">
                 <div className="min-w-0">

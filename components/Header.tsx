@@ -1,6 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 
@@ -29,8 +30,15 @@ export function Header({ title, back }: { title?: string; back?: string }) {
             ←
           </Link>
         ) : (
-          <Link href="/map" className="text-base font-bold text-zinc-900">
-            제슐렝가이드
+          <Link href="/map" aria-label="제슐렝가이드 홈" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="제슐렝가이드"
+              width={120}
+              height={32}
+              priority
+              className="h-8 w-auto"
+            />
           </Link>
         )}
         {title ? <h1 className="text-base font-semibold">{title}</h1> : null}
@@ -38,16 +46,32 @@ export function Header({ title, back }: { title?: string; back?: string }) {
       <nav className="flex items-center gap-3 text-sm text-zinc-600">
         <Link href="/ranking">랭킹</Link>
         {status === 'loading' ? null : nickname ? (
-          <div ref={menuRef} className="relative">
+          <div ref={menuRef} className="relative flex items-center gap-2">
+            <span className="font-medium text-zinc-900">{nickname}</span>
             <button
               type="button"
               onClick={() => setMenuOpen(o => !o)}
-              className="flex items-center gap-1 font-medium text-zinc-900"
+              aria-label="메뉴 열기"
               aria-haspopup="menu"
               aria-expanded={menuOpen}
+              className="-mr-1 inline-flex h-10 w-10 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100"
             >
-              {nickname}
-              <span aria-hidden className="text-base leading-none">≡</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="4" y1="12" x2="20" y2="12" />
+                <line x1="4" y1="17" x2="20" y2="17" />
+              </svg>
             </button>
             {menuOpen ? (
               <div
