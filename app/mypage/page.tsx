@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function MyPage() {
   const me = await getSessionUser()
-  if (!me) redirect('/login?callbackUrl=/mypage')
+  if (!me) redirect('/signup?callbackUrl=/mypage')
 
   const [places, reviews, ranks] = await Promise.all([
     prisma.place.findMany({

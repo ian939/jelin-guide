@@ -16,7 +16,7 @@ export function RollbackButton({ placeId, revisionId }: { placeId: string; revis
     })
     setBusy(false)
     if (res.status === 401) {
-      router.replace(`/login?callbackUrl=/places/${placeId}/history`)
+      router.replace(`/signup?callbackUrl=/places/${placeId}/history`)
       return
     }
     if (res.ok) {

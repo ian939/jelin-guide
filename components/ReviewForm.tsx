@@ -39,7 +39,7 @@ export function ReviewForm({
     })
     setBusy(false)
     if (res.status === 401) {
-      router.replace(`/login?callbackUrl=/places/${placeId}`)
+      router.replace(`/signup?callbackUrl=/places/${placeId}`)
       return
     }
     if (res.status === 409) {

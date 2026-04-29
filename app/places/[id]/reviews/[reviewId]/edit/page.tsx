@@ -12,7 +12,7 @@ export default async function EditReviewPage({
   params: { id: string; reviewId: string }
 }) {
   const user = await getSessionUser()
-  if (!user) redirect(`/login?callbackUrl=/places/${params.id}`)
+  if (!user) redirect(`/signup?callbackUrl=/places/${params.id}`)
   const review = await prisma.review.findUnique({ where: { id: params.reviewId } })
   if (!review) notFound()
   if (review.authorId !== user.id) redirect(`/places/${params.id}`)

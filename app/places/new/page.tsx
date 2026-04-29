@@ -99,7 +99,7 @@ function NewPlaceForm() {
     })
     setLoading(false)
     if (res.status === 401) {
-      router.replace('/login?callbackUrl=/places/new')
+      router.replace('/signup?callbackUrl=/places/new')
       return
     }
     if (res.status === 409) {

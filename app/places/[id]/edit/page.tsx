@@ -103,7 +103,7 @@ function EditPlaceForm({ params }: { params: { id: string } }) {
     })
     setSubmitting(false)
     if (res.status === 401) {
-      router.replace(`/login?callbackUrl=/places/${params.id}/edit`)
+      router.replace(`/signup?callbackUrl=/places/${params.id}/edit`)
       return
     }
     if (res.status === 422) {
