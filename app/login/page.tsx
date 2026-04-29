@@ -43,7 +43,10 @@ function LoginForm() {
 
   return (
     <main className="px-5 py-10">
-      <h1 className="mb-8 text-2xl font-bold">로그인</h1>
+      <h1 className="mb-3 text-2xl font-bold">어서 오세요, 크루님 👋</h1>
+      <p className="mb-8 text-sm leading-relaxed text-zinc-600">
+        닉네임이랑 비밀번호만 입력하면 바로 들어갈 수 있어요.
+      </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label htmlFor="nickname">닉네임</label>
@@ -68,11 +71,11 @@ function LoginForm() {
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button type="submit" disabled={loading} className="btn">
-          {loading ? '로그인 중…' : '로그인'}
+          {loading ? '입장 중…' : '위키 입장하기'}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-zinc-500">
-        계정이 없으신가요?{' '}
+        아직 계정이 없으신가요?{' '}
         <Link href="/signup" className="text-accent">
           가입하기
         </Link>
