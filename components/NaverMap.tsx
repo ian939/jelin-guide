@@ -15,6 +15,7 @@ export type MapMarker = {
   avgScore?: number | null
   reviewCount?: number
   category?: string
+  tags?: string[]
 }
 
 export function NaverMap({
@@ -150,6 +151,10 @@ export function NaverMap({
         setSelectedId(m.id)
         onMarkerClick?.(m.id)
       })
+      // PC 호버 시에도 자동 노출 (모바일은 mouseover 미발생이라 click과 동일)
+      naver.maps.Event.addListener(marker, 'mouseover', () => {
+        setSelectedId(m.id)
+      })
       markerCache.current.set(m.id, marker)
     }
   }, [ready, markers, onMarkerClick])
@@ -203,6 +208,18 @@ export function NaverMap({
                     )}
                     · 리뷰 {selectedMarker.reviewCount ?? 0}
                   </p>
+                  {selectedMarker.tags && selectedMarker.tags.length > 0 ? (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {selectedMarker.tags.slice(0, 5).map(t => (
+                        <span
+                          key={t}
+                          className="rounded-full bg-zinc-100 px-2 py-0.5 text-[11px] font-medium text-zinc-700"
+                        >
+                          #{t}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <button
                   type="button"

@@ -73,6 +73,7 @@ export async function GET(req: Request) {
       zeropaySelfReport: p.zeropaySelfReport,
       menuMemo: p.menuMemo,
       priceMemo: p.priceMemo,
+      tags: p.tags ?? [],
       reviewCount: p._count.reviews,
       avgScore: avg,
     }

@@ -26,6 +26,7 @@ type ListItem = {
   category: CategoryCode
   reviewCount: number
   avgScore: number | null
+  tags: string[]
 }
 
 // SK일렉링크 본사 — 거리순 기준점
@@ -83,6 +84,7 @@ function Inner() {
             category: p.category,
             reviewCount: p.reviewCount,
             avgScore: p.avgScore,
+            tags: Array.isArray(p.tags) ? p.tags : [],
           }))
         )
         setLoading(false)
@@ -116,7 +118,7 @@ function Inner() {
 
   const markers: MapMarker[] = useMemo(
     () =>
-      sortedItems.map(({ id, name, lat, lng, category, avgScore, reviewCount }) => ({
+      sortedItems.map(({ id, name, lat, lng, category, avgScore, reviewCount, tags }) => ({
         id,
         name,
         lat,
@@ -124,6 +126,7 @@ function Inner() {
         category: CATEGORY_LABEL[category],
         avgScore,
         reviewCount,
+        tags,
       })),
     [sortedItems]
   )
