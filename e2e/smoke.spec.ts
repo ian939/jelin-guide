@@ -68,8 +68,8 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   await page.getByRole('button', { name: /가입하고 시작하기/ }).click()
   // 가입 성공 → / → redirect → /map
   await page.waitForURL(/\/map/, { timeout: 15_000 })
-  // 헤더에 닉네임이 보임
-  await expect(page.locator('header').getByText(new RegExp(NICK))).toBeVisible({ timeout: 10_000 })
+  // 헤더에 햄버거 메뉴 노출 (로그인 상태 표시) — 닉네임은 모바일 폭에서 메뉴 안에 있음
+  await expect(page.locator('header').getByRole('button', { name: '메뉴 열기' })).toBeVisible({ timeout: 10_000 })
 
   // 3. 맛집 추천 — 카카오 키워드 검색 → 첫 결과 선택 → 폼 자동 채움
   await page.goto('/places/new')

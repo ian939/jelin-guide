@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/Header'
-import { MealTypeTabs } from '@/components/MealTypeTabs'
 import { NaverMap, type MapMarker } from '@/components/NaverMap'
 import { Stars } from '@/components/Stars'
 import { haversineMeters } from '@/lib/places'
@@ -145,8 +144,7 @@ function Inner() {
 
   return (
     <>
-      <Header />
-      <MealTypeTabs />
+      <Header showMealType />
       <div className="flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none]">
         {CATEGORIES.map(c => (
           <button

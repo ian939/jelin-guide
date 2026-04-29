@@ -1,7 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { FlashToast } from '@/components/FlashToast'
-import { ProposalFab } from '@/components/ProposalFab'
 import Providers from '@/components/SessionProvider'
 
 export const metadata: Metadata = {
@@ -24,7 +23,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="mx-auto min-h-screen max-w-mobile bg-white shadow-sm md:my-4 md:rounded-2xl md:shadow-lg">
             {children}
           </div>
-          <ProposalFab />
           <FlashToast />
         </Providers>
       </body>
