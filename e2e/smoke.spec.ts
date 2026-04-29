@@ -65,7 +65,7 @@ test('전체 골든 패스: 가입 → 로그인 → 맛집 추천 → 리뷰 �
   await page.goto('/signup')
   await page.getByLabel(/닉네임/).fill(NICK)
   await page.getByLabel(/비밀번호/).fill(PWD)
-  await page.getByRole('button', { name: /가입하고 시작하기/ }).click()
+  await page.getByRole('button', { name: /위키 입장하기/ }).click()
   // 가입 성공 → / → redirect → /map
   await page.waitForURL(/\/map/, { timeout: 15_000 })
   // 헤더에 햄버거 메뉴 노출 (로그인 상태 표시) — 닉네임은 모바일 폭에서 메뉴 안에 있음
@@ -159,7 +159,7 @@ test('위키식 수정·롤백 — 두 번째 사용자가 정보를 수정하�
   await page.goto('/signup')
   await page.getByLabel(/닉네임/).fill(editorNick)
   await page.getByLabel(/비밀번호/).fill(PWD)
-  await page.getByRole('button', { name: /가입하고 시작하기/ }).click()
+  await page.getByRole('button', { name: /위키 입장하기/ }).click()
   await page.waitForURL('/', { timeout: 15_000 })
 
   // 2) 가맹점 리스트 첫 항목 진입 (골든 패스에서 등록한 가게)

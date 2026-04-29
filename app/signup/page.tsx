@@ -45,13 +45,15 @@ export default function SignupPage() {
 
   return (
     <main className="px-5 py-10">
-      <h1 className="mb-2 text-2xl font-bold">가입하기</h1>
-      <p className="mb-8 text-sm text-zinc-500">
-        ⚠️ 비밀번호 복구 수단이 없습니다. 자주 쓰는 기기의 브라우저·비밀번호 매니저에 저장해두세요.
-      </p>
+      <h1 className="mb-3 text-2xl font-bold">반가워요, 크루님 👋</h1>
+      <div className="mb-8 space-y-1 text-sm leading-relaxed text-zinc-600">
+        <p>학동 위키에 처음 오셨군요!</p>
+        <p>닉네임이랑 비밀번호만 정해주시면, 바로 시작할 수 있어요.</p>
+        <p className="text-xs text-zinc-500">(다음부턴 로그인도 필요 없답니다)</p>
+      </div>
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
-          <label htmlFor="nickname">닉네임 (2~16자, 한글·영문·숫자·_)</label>
+          <label htmlFor="nickname">닉네임 정하기</label>
           <input
             id="nickname"
             value={nickname}
@@ -60,11 +62,11 @@ export default function SignupPage() {
             required
           />
           <p className="mt-1 text-xs text-zinc-500">
-            동명이 있을 경우 자동 접미사가 붙습니다 (예: <code>구아저씨_2</code>).
+            2~16자 · 한글·영문·숫자·_ · 동명일 경우 <code>구아저씨_2</code>처럼 접미사가 붙어요.
           </p>
         </div>
         <div>
-          <label htmlFor="password">비밀번호 (8자 이상)</label>
+          <label htmlFor="password">비밀번호</label>
           <input
             id="password"
             type="password"
@@ -73,10 +75,13 @@ export default function SignupPage() {
             autoComplete="new-password"
             required
           />
+          <p className="mt-1 text-xs text-zinc-500">
+            8자 이상. ⚠️ 복구 수단이 없으니 비밀번호 매니저에 저장해두세요.
+          </p>
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
         <button type="submit" disabled={loading} className="btn">
-          {loading ? '가입 중…' : '가입하고 시작하기'}
+          {loading ? '입장 중…' : '위키 입장하기'}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-zinc-500">
