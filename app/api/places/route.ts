@@ -77,8 +77,10 @@ export async function GET(req: Request) {
     { places: enriched, page, pageSize },
     {
       headers: {
-        // 30초 fresh + 120초 SWR. mutation 후엔 router.refresh()로 강제 갱신.
-        'Cache-Control': 'public, max-age=30, stale-while-revalidate=120',
+        // private — Netlify edge cache는 우회 (edge가 mealType 등 query를 vary key에
+        // 포함하지 않아 다른 필터끼리 응답이 섞이는 문제 방지). 브라우저는 URL별로
+        // 분리 캐시하므로 같은 필터 재방문은 여전히 30초 즉시.
+        'Cache-Control': 'private, max-age=30',
       },
     }
   )
