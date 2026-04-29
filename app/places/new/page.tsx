@@ -131,7 +131,7 @@ function NewPlaceForm() {
 
   return (
     <>
-      <Header title="맛집 추천하기" back="/places" />
+      <Header title="맛집 추천하기" back="/map" />
       <main className="px-5 py-6">
         <form onSubmit={onSubmit} className="space-y-4">
           {!picked ? (

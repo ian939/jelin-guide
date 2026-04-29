@@ -62,7 +62,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
 
   return (
     <>
-      <Header title={place.name} back="/places" />
+      <Header title={place.name} back="/map" />
       <main className="px-5 pb-12">
         <div className="mt-4 space-y-2">
           <p className="text-xs text-zinc-500">
