@@ -1,12 +1,29 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { FlashToast } from '@/components/FlashToast'
 import Providers from '@/components/SessionProvider'
+import { SwRegister } from '@/components/SwRegister'
 
 export const metadata: Metadata = {
   title: '학동위키',
   description: '제로페이 가맹 맛집을 동료가 직접 추천·평가하는 가이드',
-  viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: '학동위키',
+  },
+  icons: {
+    icon: '/icon.png',
+    apple: '/icons/icon-192.png',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#1F6BFF',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
           <FlashToast />
+          <SwRegister />
         </Providers>
       </body>
     </html>

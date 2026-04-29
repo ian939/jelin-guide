@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useRef, useState } from 'react'
+import { InstallDialog } from '@/components/InstallDialog'
 import { ProposalDialog } from '@/components/ProposalDialog'
 import { MEAL_TYPES, MEAL_TYPE_LABEL, type MealTypeCode } from '@/lib/validators/place'
 
@@ -28,6 +29,7 @@ export function Header({
   const nickname = session?.user?.nickname ?? null
   const [menuOpen, setMenuOpen] = useState(false)
   const [proposalOpen, setProposalOpen] = useState(false)
+  const [installOpen, setInstallOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -144,6 +146,16 @@ export function Header({
                     type="button"
                     onClick={() => {
                       setMenuOpen(false)
+                      setInstallOpen(true)
+                    }}
+                    className="block w-full border-t border-zinc-100 px-4 py-3 text-left text-sm text-zinc-800 hover:bg-zinc-50"
+                  >
+                    📲 홈 화면에 추가
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMenuOpen(false)
                       setProposalOpen(true)
                     }}
                     className="block w-full border-t border-zinc-100 px-4 py-3 text-left text-sm text-zinc-800 hover:bg-zinc-50"
@@ -161,6 +173,7 @@ export function Header({
         </div>
       </header>
 
+      <InstallDialog open={installOpen} onClose={() => setInstallOpen(false)} />
       <ProposalDialog open={proposalOpen} onClose={() => setProposalOpen(false)} />
     </>
   )
