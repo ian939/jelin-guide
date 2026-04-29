@@ -31,21 +31,27 @@ function Inner() {
   const [visible, setVisible] = useState(false)
   const [message, setMessage] = useState('')
 
+  // flash가 들어오면 메시지·visible 셋 + URL 정리. timer는 별개 effect에서 관리.
+  // (cleanup으로 timer를 만들면 다음 dep change 때 timer가 cancel되어 toast가 사라지지 않는 버그)
   useEffect(() => {
     if (!flash) return
     const m = MESSAGES[flash]
     if (!m) return
     setMessage(m)
     setVisible(true)
-    const timer = setTimeout(() => setVisible(false), 3000)
-    // URL에서 flash 제거 (replace로 history 안 늘림)
     const next = new URLSearchParams(params)
     next.delete('flash')
     const qs = next.toString()
     router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false })
-    return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [flash])
+
+  // visible이 true가 되면 3초 후 자동 사라짐
+  useEffect(() => {
+    if (!visible) return
+    const t = setTimeout(() => setVisible(false), 3000)
+    return () => clearTimeout(t)
+  }, [visible])
 
   if (!visible || !message) return null
   return (

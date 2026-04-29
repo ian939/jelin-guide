@@ -32,9 +32,9 @@ type ListItem = {
 const HOME_LAT = 37.5159083
 const HOME_LNG = 127.0339653
 
-type SortKey = 'recent' | 'distance' | 'rating'
+type SortKey = 'review' | 'distance' | 'rating'
 const SORT_LABEL: Record<SortKey, string> = {
-  recent: '최신',
+  review: '리뷰순',
   distance: '가까운 순',
   rating: '평점 높은 순',
 }
@@ -97,7 +97,7 @@ function Inner() {
     return () => ctrl.abort()
   }, [selected, tagFilter, mealType])
 
-  // 정렬: client-side에 적용 (server는 'recent' 기본)
+  // 정렬: client-side에 적용 (server는 createdAt desc 기본)
   const sortedItems = useMemo(() => {
     const arr = [...items]
     if (sortKey === 'distance') {
@@ -108,6 +108,8 @@ function Inner() {
       )
     } else if (sortKey === 'rating') {
       arr.sort((a, b) => (b.avgScore ?? -1) - (a.avgScore ?? -1))
+    } else if (sortKey === 'review') {
+      arr.sort((a, b) => b.reviewCount - a.reviewCount)
     }
     return arr
   }, [items, sortKey])
@@ -161,7 +163,7 @@ function Inner() {
               {loading ? '불러오는 중…' : `${sortedItems.length}곳 표시 중`}
             </p>
             <div className="flex gap-1">
-              {(['recent', 'distance', 'rating'] as SortKey[]).map(k => (
+              {(['review', 'distance', 'rating'] as SortKey[]).map(k => (
                 <button
                   key={k}
                   onClick={() => setSortKey(k)}
