@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { MiniMap } from '@/components/MiniMap'
 import { Stars } from '@/components/Stars'
 import { ZeropayVoteButtons } from '@/components/ZeropayVoteButtons'
 import { ReportButton } from '@/components/ReportButton'
@@ -77,6 +78,9 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
             >
               네이버지도 ↗
             </a>
+          </div>
+          <div className="mt-2">
+            <MiniMap lat={place.lat} lng={place.lng} name={place.name} />
           </div>
           {place.menuMemo ? (
             <p className="text-sm text-zinc-600">🍴 {place.menuMemo}</p>
