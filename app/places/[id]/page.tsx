@@ -80,7 +80,7 @@ export default async function PlaceDetailPage({ params }: { params: { id: string
             </a>
           </div>
           <div className="mt-2">
-            <MiniMap lat={place.lat} lng={place.lng} name={place.name} />
+            <MiniMap lat={place.lat} lng={place.lng} name={place.name} zoom={15} />
           </div>
           {place.menuMemo ? (
             <p className="text-sm text-zinc-600">🍴 {place.menuMemo}</p>
