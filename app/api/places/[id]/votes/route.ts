@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { recomputePlaceAggregates } from '@/lib/place-aggregates'
 import { requireSessionUser } from '@/lib/session'
 import { voteSubmitSchema } from '@/lib/validators/report'
 
@@ -17,14 +18,18 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   const place = await prisma.place.findUnique({ where: { id: params.id }, select: { id: true } })
   if (!place) return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 })
 
-  const vote = await prisma.zeropayVote.upsert({
-    where: { placeId_voterId: { placeId: place.id, voterId: user.id } },
-    create: {
-      placeId: place.id,
-      voterId: user.id,
-      isAvailable: parsed.data.isAvailable,
-    },
-    update: { isAvailable: parsed.data.isAvailable },
+  const vote = await prisma.$transaction(async tx => {
+    const v = await tx.zeropayVote.upsert({
+      where: { placeId_voterId: { placeId: place.id, voterId: user.id } },
+      create: {
+        placeId: place.id,
+        voterId: user.id,
+        isAvailable: parsed.data.isAvailable,
+      },
+      update: { isAvailable: parsed.data.isAvailable },
+    })
+    await recomputePlaceAggregates(place.id, tx)
+    return v
   })
 
   return NextResponse.json({ vote })

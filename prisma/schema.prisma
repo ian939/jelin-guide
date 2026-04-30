@@ -147,6 +147,10 @@ model Place {
   reviewCount Int    @default(0)
   avgScore    Float?
 
+  // 크루검증 플래그 — 리뷰 1+ OR 제로페이 vote(YES) 1+ 인지 캐시.
+  // 리뷰 CRUD·hide·제로페이 vote 작성·변경 시 lib/place-aggregates.ts로 갱신.
+  crewVerified Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -159,6 +163,7 @@ model Place {
   @@index([lat, lng]) // 지도 viewport bbox 쿼리
   @@index([isHidden])
   @@index([createdById])
+  @@index([crewVerified])
 }
 
 /// 가맹점 수정 이력 (위키식). 첫 등록 시점에도 1건이 함께 생성된다.

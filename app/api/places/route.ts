@@ -16,6 +16,7 @@ export async function GET(req: Request) {
     categories: rawCategories.length ? rawCategories : undefined,
     mealType: url.searchParams.get('mealType') ?? undefined,
     tags: rawTags.length ? rawTags : undefined,
+    crewVerified: url.searchParams.get('crewVerified') ?? undefined,
     minAvg: url.searchParams.get('minAvg') ?? undefined,
     minReviews: url.searchParams.get('minReviews') ?? undefined,
     sort: url.searchParams.get('sort') ?? undefined,
@@ -25,11 +26,12 @@ export async function GET(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'VALIDATION', issues: parsed.error.flatten() }, { status: 400 })
   }
-  const { q, categories, mealType, tags, minAvg, minReviews, sort, page = 1, pageSize = 20 } = parsed.data
+  const { q, categories, mealType, tags, crewVerified, minAvg, minReviews, sort, page = 1, pageSize = 20 } = parsed.data
 
   const where: Prisma.PlaceWhereInput = { isHidden: false }
   if (categories?.length) where.category = { in: categories }
   if (mealType) where.mealType = mealType
+  if (crewVerified) where.crewVerified = true
   // 키워드 필터: 선택한 태그 중 하나라도 포함되면 매칭 (OR)
   if (tags?.length) where.tags = { hasSome: tags }
   if (q) {
@@ -46,7 +48,7 @@ export async function GET(req: Request) {
     orderBy: sort === 'recent' ? { createdAt: 'desc' } : { createdAt: 'desc' },
   })
 
-  // reviewCount·avgScore는 Place 캐시 컬럼에서 직접 — review groupBy 제거.
+  // reviewCount·avgScore·crewVerified는 Place 캐시 컬럼에서 직접 — review groupBy 제거.
   let enriched = places.map(p => ({
     id: p.id,
     name: p.name,
@@ -61,6 +63,7 @@ export async function GET(req: Request) {
     tags: p.tags ?? [],
     reviewCount: p.reviewCount,
     avgScore: p.avgScore,
+    crewVerified: p.crewVerified,
   }))
 
   if (typeof minAvg === 'number') enriched = enriched.filter(p => (p.avgScore ?? 0) >= minAvg)

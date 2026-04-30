@@ -39,7 +39,7 @@ export default async function MyPage() {
 
         <section className="mt-6 grid grid-cols-3 gap-2">
           <RankCell label="추천" rank={ranks.proposal} />
-          <RankCell label="이달 심사" rank={ranks.monthly} />
+          <RankCell label="이달 검증" rank={ranks.monthly} />
           <RankCell label="명예의 전당" rank={ranks.hall} />
         </section>
 

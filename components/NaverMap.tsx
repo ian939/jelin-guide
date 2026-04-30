@@ -17,6 +17,7 @@ export type MapMarker = {
   reviewCount?: number
   category?: string
   tags?: string[]
+  crewVerified?: boolean
 }
 
 export function NaverMap({
@@ -226,6 +227,11 @@ export function NaverMap({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate text-base font-semibold">{selectedMarker.name}</p>
+                  {selectedMarker.crewVerified ? (
+                    <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                      ✓ 크루검증
+                    </span>
+                  ) : null}
                   {selectedMarker.category ? (
                     <p className="text-xs text-zinc-500">{selectedMarker.category}</p>
                   ) : null}

@@ -15,7 +15,7 @@ export default async function RankingPage() {
       <main className="px-4 pb-12">
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Section title="🔥 추천 랭킹" subtitle="누적 맛집 추천 수" rows={proposal} unit="추천" />
-          <Section title="👑 심사 랭킹" subtitle="이번 달 리뷰 수" rows={monthly} unit="리뷰" />
+          <Section title="👑 검증 랭킹" subtitle="이번 달 리뷰 수" rows={monthly} unit="리뷰" />
         </div>
       </main>
     </>

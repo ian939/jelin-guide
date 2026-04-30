@@ -26,6 +26,7 @@ type ListItem = {
   reviewCount: number
   avgScore: number | null
   tags: string[]
+  crewVerified: boolean
 }
 
 // SK일렉링크 본사 — 거리순 기준점
@@ -58,6 +59,7 @@ function Inner() {
   const [selected, setSelected] = useState<Set<CategoryCode>>(new Set())
   const [tagFilter, setTagFilter] = useState<Set<PlaceTag>>(new Set())
   const [sortKey, setSortKey] = useState<SortKey>('rating')
+  const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -66,8 +68,9 @@ function Inner() {
     qs.set('mealType', mealType)
     selected.forEach(c => qs.append('category', c))
     tagFilter.forEach(t => qs.append('tag', t))
+    if (verifiedOnly) qs.set('crewVerified', 'true')
     setLoading(true)
-    fetch(`/api/places?${qs.toString()}&pageSize=50`, { signal: ctrl.signal })
+    fetch(`/api/places?${qs.toString()}&pageSize=200`, { signal: ctrl.signal })
       .then(async r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`)
         return r.json()
@@ -84,6 +87,7 @@ function Inner() {
             reviewCount: p.reviewCount,
             avgScore: p.avgScore,
             tags: Array.isArray(p.tags) ? p.tags : [],
+            crewVerified: !!p.crewVerified,
           }))
         )
         setLoading(false)
@@ -96,7 +100,7 @@ function Inner() {
         setLoading(false)
       })
     return () => ctrl.abort()
-  }, [selected, tagFilter, mealType])
+  }, [selected, tagFilter, mealType, verifiedOnly])
 
   // 정렬: client-side에 적용 (server는 createdAt desc 기본)
   const sortedItems = useMemo(() => {
@@ -117,7 +121,7 @@ function Inner() {
 
   const markers: MapMarker[] = useMemo(
     () =>
-      sortedItems.map(({ id, name, lat, lng, category, avgScore, reviewCount, tags }) => ({
+      sortedItems.map(({ id, name, lat, lng, category, avgScore, reviewCount, tags, crewVerified }) => ({
         id,
         name,
         lat,
@@ -126,6 +130,7 @@ function Inner() {
         avgScore,
         reviewCount,
         tags,
+        crewVerified,
       })),
     [sortedItems]
   )
@@ -146,6 +151,12 @@ function Inner() {
     <>
       <Header showMealType />
       <div className="flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none]">
+        <button
+          onClick={() => setVerifiedOnly(v => !v)}
+          className={`chip shrink-0 ${verifiedOnly ? 'chip-active' : ''}`}
+        >
+          ✓ 크루검증
+        </button>
         {CATEGORIES.map(c => (
           <button
             key={c}
@@ -197,6 +208,11 @@ function Inner() {
               <Link href={`/places/${p.id}`} className="card flex items-center justify-between text-sm">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{p.name}</p>
+                  {p.crewVerified ? (
+                    <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold text-accent">
+                      ✓ 크루검증
+                    </span>
+                  ) : null}
                   <p className="text-xs text-zinc-500">{CATEGORY_LABEL[p.category]}</p>
                 </div>
                 <div className="text-right">
