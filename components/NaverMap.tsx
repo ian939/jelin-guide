@@ -5,7 +5,8 @@ import Script from 'next/script'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 
-const CLUSTER_THRESHOLD = 50
+// 시드 116개를 모두 이모지 마커로 표시. 더 늘어나면 클러스터링 도입 검토.
+const CLUSTER_THRESHOLD = 250
 
 export type MapMarker = {
   id: string
@@ -139,8 +140,16 @@ export function NaverMap({
         existing.setPosition(pos)
         continue
       }
-      // 카테고리별 마커 이모지 — 카페는 ☕, 나머지는 🍴
-      const emoji = m.category === '카페' ? '☕' : '🍴'
+      // 카테고리별 마커 이모지 (m.category는 한글 라벨)
+      const emoji =
+        m.category === '한식' ? '🍚'
+        : m.category === '양식' ? '🍝'
+        : m.category === '일식' ? '🍣'
+        : m.category === '중식' ? '🥡'
+        : m.category === '분식' ? '🍢'
+        : m.category === '카페' ? '☕'
+        : m.category === '주점' ? '🍺'
+        : '🍴'
       const marker = new naver.maps.Marker({
         position: pos,
         map: mapInstance.current,

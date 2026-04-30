@@ -80,7 +80,6 @@ function csvToRows(text: string): Row[] {
 
 function mapNaverReviewTag(count: number): PlaceTag | null {
   if (count >= 500) return '네이버 500+'
-  if (count >= 100) return '네이버 100+'
   return null
 }
 

@@ -32,19 +32,16 @@ export const MEAL_TYPE_LABEL: Record<MealTypeCode, string> = {
 }
 
 // 추천 시 사용자가 선택할 수 있는 키워드 (multi-select).
-// '네이버 100+' / '네이버 500+'는 크롤링 import 스크립트가 자동 부여한다 — 사용자도 선택 가능.
+// '네이버 500+'는 크롤링 import 스크립트가 자동 부여 — 사용자도 선택 가능.
 export const PLACE_TAGS = [
   '도보 5분',
-  '도보 10분',
   '손님과 함께',
-  '웨이팅',
   '혼밥',
   '가성비',
   '분위기 좋음',
   '조용함',
   '단체 가능',
   '주차 가능',
-  '네이버 100+',
   '네이버 500+',
 ] as const
 export type PlaceTag = (typeof PLACE_TAGS)[number]

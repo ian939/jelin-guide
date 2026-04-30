@@ -151,12 +151,6 @@ function Inner() {
     <>
       <Header showMealType />
       <div className="flex gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none]">
-        <button
-          onClick={() => setVerifiedOnly(v => !v)}
-          className={`chip shrink-0 ${verifiedOnly ? 'chip-active' : ''}`}
-        >
-          ✓ 크루검증
-        </button>
         {CATEGORIES.map(c => (
           <button
             key={c}
@@ -191,6 +185,12 @@ function Inner() {
             </div>
           </div>
           <div className="mt-2 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+            <button
+              onClick={() => setVerifiedOnly(v => !v)}
+              className={`chip shrink-0 ${verifiedOnly ? 'chip-active' : ''}`}
+            >
+              #크루검증
+            </button>
             {PLACE_TAGS.map(t => (
               <button
                 key={t}
