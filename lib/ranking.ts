@@ -9,6 +9,9 @@
 
 import { prisma } from '@/lib/db'
 
+// 랭킹에서 제외할 시스템·운영자 닉네임. 크롤링 import 봇과 운영자 본인 등.
+const EXCLUDED_NICKNAMES = new Set<string>(['학동봇', '학동두루미'])
+
 export type RankRow = { userId: string; nickname: string; count: number }
 
 const CACHE_TTL_MS = 5 * 60 * 1000
@@ -54,7 +57,9 @@ async function enrich(rows: { userId: string; count: number }[]): Promise<RankRo
     select: { id: true, nickname: true },
   })
   const map = new Map(users.map(u => [u.id, u.nickname]))
-  return rows.map(r => ({ ...r, nickname: map.get(r.userId) ?? '익명' }))
+  return rows
+    .map(r => ({ ...r, nickname: map.get(r.userId) ?? '익명' }))
+    .filter(r => !EXCLUDED_NICKNAMES.has(r.nickname))
 }
 
 async function cached(kind: CacheKey, limit: number): Promise<RankRow[]> {
