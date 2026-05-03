@@ -129,8 +129,8 @@ test('지도 페이지 — 마커·SK일렉링크 리센터·추천 FAB', async 
   // SK일렉링크 리센터 버튼이 지도 위에 노출
   await expect(page.getByRole('button', { name: /SK일렉링크/ })).toBeVisible()
 
-  // "+ 맛집 추천하기" floating action button이 보이고 /places/new 로 연결
-  const fab = page.getByRole('link', { name: /\+ 맛집 추천하기/ })
+  // "+ 추천하기" floating action button이 보이고 /places/new 로 연결
+  const fab = page.getByRole('link', { name: /\+ 추천하기/ })
   await expect(fab).toBeVisible()
   await expect(fab).toHaveAttribute('href', '/places/new')
 

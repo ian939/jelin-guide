@@ -228,7 +228,7 @@ function Inner() {
         href="/places/new"
         className="fixed bottom-6 left-1/2 z-30 -translate-x-1/2 rounded-full bg-accent px-6 py-3 text-sm font-medium text-white shadow-lg"
       >
-        + 맛집 추천하기
+        + 추천하기
       </Link>
     </>
   )

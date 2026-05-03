@@ -131,28 +131,44 @@ function NewPlaceForm() {
 
   return (
     <>
-      <Header title="맛집 추천하기" back="/map" />
+      <Header title="추천하기" back="/map" />
       <main className="px-5 py-6">
         <form onSubmit={onSubmit} className="space-y-4">
           {!picked ? (
             <PlaceKeywordSearch onSelect={applyHit} />
           ) : (
-            <div className="rounded-2xl border border-accent bg-accent-soft p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-semibold">{picked.name}</p>
-                  <p className="text-xs text-zinc-600">{picked.roadAddress || picked.jibunAddress}</p>
-                  {picked.category ? (
-                    <p className="mt-1 text-[11px] text-zinc-500">{picked.category}</p>
-                  ) : null}
+            <div className="space-y-2">
+              <div className="rounded-2xl border border-accent bg-accent-soft p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs text-zinc-500">선택한 위치</p>
+                    <p className="text-sm font-medium text-zinc-700">{picked.roadAddress || picked.jibunAddress}</p>
+                    {picked.category ? (
+                      <p className="mt-1 text-[11px] text-zinc-500">{picked.category}</p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={reset}
+                    className="shrink-0 rounded-lg bg-white px-2 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200"
+                  >
+                    다시 검색
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="shrink-0 rounded-lg bg-white px-2 py-1 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200"
-                >
-                  다시 검색
-                </button>
+              </div>
+              <div>
+                <label htmlFor="name">상호 *</label>
+                <input
+                  id="name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="가게 이름을 입력하거나 수정하세요"
+                  maxLength={80}
+                  required
+                />
+                <p className="mt-1 text-xs text-zinc-500">
+                  검색 결과 상호를 그대로 쓰거나, 직접 입력해 등록할 수 있어요.
+                </p>
               </div>
             </div>
           )}

@@ -92,23 +92,23 @@ export function NaverMap({
       icon: {
         content: `
           <div style="
-            width: 100px;
-            height: 28px;
+            width: 30px;
+            height: 30px;
             border-radius: 9999px;
-            background: linear-gradient(135deg, #EA002C 0%, #FF6F00 100%);
+            background: #EA002C;
             color: #fff;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 11px;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
             display: flex;
             align-items: center;
             justify-content: center;
             border: 2px solid #fff;
-            box-shadow: 0 6px 16px rgba(234, 0, 44, 0.35), 0 2px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 10px rgba(234, 0, 44, 0.35), 0 1px 3px rgba(0,0,0,0.2);
             font-family: 'Pretendard Variable', Pretendard, system-ui, sans-serif;
-          ">skelectlink</div>
+          ">SK</div>
         `,
-        anchor: new naver.maps.Point(50, 14),
+        anchor: new naver.maps.Point(15, 15),
       },
     })
     // 지도 빈 공간 클릭 시 floating card 닫기
