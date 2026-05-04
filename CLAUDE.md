@@ -34,10 +34,11 @@ SK일렉링크 임직원이 학동 인근 제로페이 가맹 맛집을 동료�
 2. 운영자가 CSV를 보고 페어 결정. **A를 살리고 B를 hide** 방식.
    - 일반적으로 A = 먼저 등록된 가게(학동봇/학동두루미가 등록한 원본), B = 나중에 별칭/축약명으로 다시 들어온 가게(회사장부·Zen 등 일반 사용자 별도 등록)
    - false positive(같은 건물 다른 가게) 다수 — 이름 유사도와 표기를 운영자가 직접 본다.
-3. `scripts/hide-duplicate-places.ts`의 `TARGETS` 배열에 hide할 B 가게 정보(이름·주소 정규식·등록자 닉네임) 기입 후 실행.
-4. hide된 가게는 `isHidden=true` + `hiddenAt` 셋. /map·/places·검색에서 제외. 데이터는 보존 — 추후 운영자가 `/admin`에서 복원 가능.
+3. `scripts/hide-duplicate-places.ts`의 `TARGETS` 배열에 hide할 B 가게 + 합쳐질 A 가게(`mergeIntoName`/`mergeIntoAddrPattern`) 기입 후 실행.
+4. hide된 가게는 `isHidden=true` + `hiddenAt` 셋. /map·/places·검색에서 제외. 데이터는 보존 — `/admin`에서 복원 가능.
+5. `data/place-aliases.json` 자동 갱신: `{ hiddenPlaceId: activePlaceId }`. 다음 달 사내 결제 데이터에 같은 가게가 또 들어오면 `apply-monthly-ranking.ts`가 alias를 따라가 활성 가게(A)에 vote·visits 자동 합산.
 
-**Why**: 운영자가 직접 검수해서 결정한 중복만 정리. 자동 hide는 false positive 위험이 커서 명시적 절차로 처리. find 스크립트는 안전하게 보고만, hide 스크립트는 명시 결정만 반영.
+**Why**: 운영자가 직접 검수해서 결정한 중복만 정리. 자동 hide는 false positive 위험이 커서 명시적 절차로 처리. find 스크립트는 안전하게 보고만, hide 스크립트는 명시 결정만 반영. alias 매핑은 향후 동일 데이터 재유입 시 자동 활성 가게로 통합.
 
 ## 테스트 데이터 정리
 

@@ -226,7 +226,8 @@ type Resolution =
 async function resolveRow(
   r: RankRow,
   activePlaces: Place[],
-  hiddenPlaces: Place[]
+  hiddenPlaces: Place[],
+  aliases: Record<string, string>
 ): Promise<Resolution> {
   const m = findMatch(r.name, r.addr, activePlaces)
   if (m.status === 'MATCHED') return { kind: 'MATCHED', row: r, place: m.place, score: m.score }
@@ -238,12 +239,32 @@ async function resolveRow(
   const geo = await geocodeAddress(r.addr)
   if (!geo) return { kind: 'GEOCODE_FAILED', row: r }
 
-  // 운영자가 이미 hide한 가게가 같은 좌표에 있으면 신규 등록 막음 — 의도된 결정 보존
+  // 운영자가 이미 hide한 가게가 같은 좌표에 있으면 신규 등록 막음 — 의도된 결정 보존.
+  // alias 매핑이 있으면 활성 가게로 redirect → ALIAS_MATCH 처럼 vote·visits 부여.
+  // 같은 도로명+번지 또는 좌표 ≤10m일 때만 적용 — 학동 좁은 지역에 다른 hidden 가게가 50m 안에
+  // 있어 잘못된 redirect되는 것 방지.
+  const xRoad = roadToken(r.addr)
   for (const h of hiddenPlaces) {
     const distM = haversineMeters({ lat: h.lat, lng: h.lng }, { lat: geo.lat, lng: geo.lng })
-    if (distM <= 50) {
-      return { kind: 'HIDDEN_DUP', row: r, place: h, distM }
+    if (distM > 50) continue
+    const hRoad = roadToken(h.address)
+    const sameRoad = !!(xRoad && hRoad && xRoad === hRoad)
+    if (distM > 10 && !sameRoad) continue
+    const aliasActiveId = aliases[h.id]
+    if (aliasActiveId) {
+      const active = activePlaces.find(p => p.id === aliasActiveId)
+      if (active) {
+        return {
+          kind: 'ALIAS_MATCH',
+          row: r,
+          place: active,
+          nameSim: 1,
+          distM,
+          geo: { lat: geo.lat, lng: geo.lng },
+        }
+      }
     }
+    return { kind: 'HIDDEN_DUP', row: r, place: h, distM }
   }
 
   // 좌표 50m + 이름 유사도 ≥ 0.7 → alias 단정
@@ -273,10 +294,21 @@ async function main() {
   const hiddenPlaces = await prisma.place.findMany({ where: { isHidden: true } })
   console.log(`db places: ${places.length} (hidden: ${hiddenPlaces.length})`)
 
+  // hide된 가게를 활성 가게로 매핑 (운영자 명시 결정)
+  const aliasPath = resolve(process.cwd(), 'data/place-aliases.json')
+  const aliases: Record<string, string> = (() => {
+    try {
+      return JSON.parse(readFileSync(aliasPath, 'utf8') || '{}')
+    } catch {
+      return {}
+    }
+  })()
+  console.log(`aliases: ${Object.keys(aliases).length}`)
+
   console.log('\n분류 중 (geocode 호출 포함)...')
   const resolutions: Resolution[] = []
   for (const r of rows) {
-    resolutions.push(await resolveRow(r, places, hiddenPlaces))
+    resolutions.push(await resolveRow(r, places, hiddenPlaces, aliases))
   }
 
   // 통계

@@ -3,8 +3,16 @@
     "label": "4월의 크루 방문 랭킹",
     "items": [
       {
+        "placeId": "cmojjtenf00026xo3izgdt1g9",
+        "visits": 42
+      },
+      {
         "placeId": "cmojgq67v000213bhf9gog8v9",
         "visits": 10
+      },
+      {
+        "placeId": "cmojgs32g000913bhdjkc3g4k",
+        "visits": 9
       },
       {
         "placeId": "cmoqpq22e000j11ms4dh9zmxz",
