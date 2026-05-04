@@ -9,8 +9,8 @@
 
 import { prisma } from '@/lib/db'
 
-// 랭킹에서 제외할 시스템·운영자 닉네임. 크롤링 import 봇과 운영자 본인 등.
-const EXCLUDED_NICKNAMES = new Set<string>(['학동봇', '학동두루미'])
+// 랭킹에서 제외할 시스템·운영자 닉네임. 크롤링 import 봇·결제 장부 봇·운영자 본인 등.
+const EXCLUDED_NICKNAMES = new Set<string>(['학동봇', '회사장부', '학동두루미'])
 
 export type RankRow = { userId: string; nickname: string; count: number }
 
