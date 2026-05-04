@@ -21,8 +21,8 @@
  * 자세한 운영 절차는 docs/사내랭킹.md 참고.
  */
 import bcrypt from 'bcryptjs'
-import { writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { basename, resolve } from 'node:path'
 import * as XLSX from 'xlsx'
 import { prisma } from '../lib/db'
 import { geocodeAddress } from '../lib/geocode'
@@ -44,9 +44,32 @@ const LEDGER_NICKNAME = '회사장부'
 const args = process.argv.slice(2)
 const APPLY = args.includes('--apply')
 const fileArg = args.find(a => a.startsWith('--file='))
+const periodArg = args.find(a => a.startsWith('--period='))
 const XLSX_PATH = fileArg
   ? resolve(process.cwd(), fileArg.slice('--file='.length))
   : resolve(process.cwd(), 'input/4월 4주차 랭킹.xlsx')
+
+// ---------- period 추정 ----------
+// 파일명 'X월 Y주차 랭킹.xlsx' → 'YYYY-MM' (현재 연도). --period= 으로 override.
+function inferPeriod(): { key: string; label: string } {
+  if (periodArg) {
+    const k = periodArg.slice('--period='.length)
+    const m = k.match(/^(\d{4})-(\d{2})$/)
+    if (!m) throw new Error('--period must be YYYY-MM')
+    return { key: k, label: `${parseInt(m[2], 10)}월의 크루 방문 랭킹` }
+  }
+  const fname = basename(XLSX_PATH)
+  const m = fname.match(/(\d+)\s*월/)
+  if (!m) {
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const mm = String(now.getMonth() + 1).padStart(2, '0')
+    return { key: `${yyyy}-${mm}`, label: `${parseInt(mm, 10)}월의 크루 방문 랭킹` }
+  }
+  const month = parseInt(m[1], 10)
+  const year = new Date().getFullYear()
+  return { key: `${year}-${String(month).padStart(2, '0')}`, label: `${month}월의 크루 방문 랭킹` }
+}
 
 // SK일렉링크 (논현동 83-15) — 도보 5분 태그 부여 기준점
 const SK_LAT = 37.5167124
@@ -193,14 +216,19 @@ async function ensureLedger() {
 type Resolution =
   | { kind: 'MATCHED'; row: RankRow; place: Place; score: number }
   | { kind: 'ALIAS_MATCH'; row: RankRow; place: Place; nameSim: number; distM: number; geo: { lat: number; lng: number } }
+  | { kind: 'HIDDEN_DUP'; row: RankRow; place: Place; distM: number }
   | { kind: 'REGISTRABLE'; row: RankRow; geo: { lat: number; lng: number; canonicalAddress: string } }
   | { kind: 'AMBIGUOUS'; row: RankRow; candidates: { place: Place; score: number }[] }
   | { kind: 'GEOCODE_FAILED'; row: RankRow }
   | { kind: 'OUT_OF_AREA'; row: RankRow }
   | { kind: 'NOT_FOUND_ADDR'; row: RankRow }
 
-async function resolveRow(r: RankRow, places: Place[]): Promise<Resolution> {
-  const m = findMatch(r.name, r.addr, places)
+async function resolveRow(
+  r: RankRow,
+  activePlaces: Place[],
+  hiddenPlaces: Place[]
+): Promise<Resolution> {
+  const m = findMatch(r.name, r.addr, activePlaces)
   if (m.status === 'MATCHED') return { kind: 'MATCHED', row: r, place: m.place, score: m.score }
   if (m.status === 'AMBIGUOUS') return { kind: 'AMBIGUOUS', row: r, candidates: m.candidates }
   if (m.status === 'NOT_FOUND_ADDR') return { kind: 'NOT_FOUND_ADDR', row: r }
@@ -209,8 +237,17 @@ async function resolveRow(r: RankRow, places: Place[]): Promise<Resolution> {
   if (!isInJakdongArea(r.addr)) return { kind: 'OUT_OF_AREA', row: r }
   const geo = await geocodeAddress(r.addr)
   if (!geo) return { kind: 'GEOCODE_FAILED', row: r }
+
+  // 운영자가 이미 hide한 가게가 같은 좌표에 있으면 신규 등록 막음 — 의도된 결정 보존
+  for (const h of hiddenPlaces) {
+    const distM = haversineMeters({ lat: h.lat, lng: h.lng }, { lat: geo.lat, lng: geo.lng })
+    if (distM <= 50) {
+      return { kind: 'HIDDEN_DUP', row: r, place: h, distM }
+    }
+  }
+
   // 좌표 50m + 이름 유사도 ≥ 0.7 → alias 단정
-  const alias = findAlias(geo.lat, geo.lng, r.name, places)
+  const alias = findAlias(geo.lat, geo.lng, r.name, activePlaces)
   if (alias) {
     return {
       kind: 'ALIAS_MATCH',
@@ -233,12 +270,13 @@ async function main() {
   console.log(`xlsx rows: ${rows.length}`)
 
   let places = await prisma.place.findMany({ where: { isHidden: false } })
-  console.log(`db places: ${places.length}`)
+  const hiddenPlaces = await prisma.place.findMany({ where: { isHidden: true } })
+  console.log(`db places: ${places.length} (hidden: ${hiddenPlaces.length})`)
 
   console.log('\n분류 중 (geocode 호출 포함)...')
   const resolutions: Resolution[] = []
   for (const r of rows) {
-    resolutions.push(await resolveRow(r, places))
+    resolutions.push(await resolveRow(r, places, hiddenPlaces))
   }
 
   // 통계
@@ -254,6 +292,8 @@ async function main() {
       out.push([x.name, x.addr, String(x.visits), 'MATCHED', r.place.id, r.place.name, r.place.address, `score=${r.score.toFixed(2)}`])
     } else if (r.kind === 'ALIAS_MATCH') {
       out.push([x.name, x.addr, String(x.visits), 'ALIAS_MATCH', r.place.id, r.place.name, r.place.address, `nameSim=${r.nameSim.toFixed(2)}, dist=${r.distM.toFixed(0)}m`])
+    } else if (r.kind === 'HIDDEN_DUP') {
+      out.push([x.name, x.addr, String(x.visits), 'HIDDEN_DUP', r.place.id, r.place.name, r.place.address, `dist=${r.distM.toFixed(0)}m (hidden 가게와 같은 좌표 — 운영자 결정 보존)`])
     } else if (r.kind === 'REGISTRABLE') {
       out.push([x.name, x.addr, String(x.visits), 'REGISTRABLE', '', '', r.geo.canonicalAddress, `lat=${r.geo.lat.toFixed(6)}, lng=${r.geo.lng.toFixed(6)}`])
     } else if (r.kind === 'AMBIGUOUS') {
@@ -363,6 +403,35 @@ async function main() {
   void CATEGORIES
 
   console.log(`\n✓ vote 적용: ${appliedVote}건 / 신규 등록: ${registered}건`)
+
+  // ---------- monthly-visits.json 갱신 ----------
+  const period = inferPeriod()
+  const visitsPath = resolve(process.cwd(), 'data/monthly-visits.json')
+  const visitsRaw = (() => {
+    try {
+      return readFileSync(visitsPath, 'utf8')
+    } catch {
+      return '{}'
+    }
+  })()
+  type VisitItem = { placeId: string; visits: number }
+  type VisitsJson = Record<string, { label: string; items: VisitItem[] }>
+  const visits: VisitsJson = JSON.parse(visitsRaw || '{}')
+  const items: VisitItem[] = []
+  for (const r of resolutions) {
+    if (r.kind === 'MATCHED' || r.kind === 'ALIAS_MATCH') {
+      items.push({ placeId: r.place.id, visits: r.row.visits })
+    } else if (r.kind === 'REGISTRABLE') {
+      // 방금 등록된 가게 — places 배열의 마지막 원소들 중 이름 매칭으로 placeId 찾기
+      const created = places.find(p => p.name === r.row.name)
+      if (created) items.push({ placeId: created.id, visits: r.row.visits })
+    }
+  }
+  // visits 내림차순으로 정렬
+  items.sort((a, b) => b.visits - a.visits)
+  visits[period.key] = { label: period.label, items }
+  writeFileSync(visitsPath, JSON.stringify(visits, null, 2) + '\n', 'utf8')
+  console.log(`monthly-visits.json: ${period.key} → ${items.length} items`)
 }
 
 main()
