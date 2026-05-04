@@ -26,6 +26,19 @@ SK일렉링크 임직원이 학동 인근 제로페이 가맹 맛집을 동료�
 
 **Why**: 운영자가 변경 사항 중 사용자에게 알릴 가치가 있는 것만 골라 노출하고 싶어함. 모든 커밋이 업데이트 내역에 들어가면 노이즈가 됨.
 
+### 중복 가게 처리
+
+학동봇(크롤링)·회사장부(사내 결제)·일반 사용자가 같은 가게를 다른 표기로 등록해 좌표 50m 이내 같은 가게가 2건 이상 들어오는 케이스가 있다. 처리 정책:
+
+1. 운영자가 검수 의뢰하면 `pnpm tsx scripts/find-duplicate-places.ts`로 후보 페어 CSV 산출 (`output/duplicates-YYYYMMDD.csv`).
+2. 운영자가 CSV를 보고 페어 결정. **A를 살리고 B를 hide** 방식.
+   - 일반적으로 A = 먼저 등록된 가게(학동봇/학동두루미가 등록한 원본), B = 나중에 별칭/축약명으로 다시 들어온 가게(회사장부·Zen 등 일반 사용자 별도 등록)
+   - false positive(같은 건물 다른 가게) 다수 — 이름 유사도와 표기를 운영자가 직접 본다.
+3. `scripts/hide-duplicate-places.ts`의 `TARGETS` 배열에 hide할 B 가게 정보(이름·주소 정규식·등록자 닉네임) 기입 후 실행.
+4. hide된 가게는 `isHidden=true` + `hiddenAt` 셋. /map·/places·검색에서 제외. 데이터는 보존 — 추후 운영자가 `/admin`에서 복원 가능.
+
+**Why**: 운영자가 직접 검수해서 결정한 중복만 정리. 자동 hide는 false positive 위험이 커서 명시적 절차로 처리. find 스크립트는 안전하게 보고만, hide 스크립트는 명시 결정만 반영.
+
 ## 테스트 데이터 정리
 
 E2E는 production DB를 공유하므로 `e2e/global-teardown.ts`가 `e2e_*` / `editor_*` 닉네임 사용자와 그들이 만든 데이터를 FK 순서대로 삭제한다. E2E로 인해 production에 잔여 가게가 누적되지 않도록 유지.
