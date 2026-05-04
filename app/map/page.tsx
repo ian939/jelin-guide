@@ -29,9 +29,9 @@ type ListItem = {
   crewVerified: boolean
 }
 
-// SK일렉링크 본사 — 거리순 기준점
-const HOME_LAT = 37.5159083
-const HOME_LNG = 127.0339653
+// SK일렉링크 본사 (논현동 83-15, 언주로135길 15 JK빌딩) — 거리순 기준점
+const HOME_LAT = 37.5167124
+const HOME_LNG = 127.0339445
 
 type SortKey = 'review' | 'distance' | 'rating'
 const SORT_LABEL: Record<SortKey, string> = {

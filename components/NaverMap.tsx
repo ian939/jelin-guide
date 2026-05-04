@@ -25,8 +25,8 @@ export function NaverMap({
   markers,
   onMarkerClick,
   onViewportChange,
-  // 기본 중심: 서울특별시 강남구 논현동 85-9 (논현로132길 43)
-  initialCenter = { lat: 37.5159083, lng: 127.0339653 },
+  // 기본 중심: 서울특별시 강남구 논현동 83-15 (언주로135길 15, JK빌딩)
+  initialCenter = { lat: 37.5167124, lng: 127.0339445 },
   heightClass = 'h-[42vh]',
 }: {
   markers: MapMarker[]
