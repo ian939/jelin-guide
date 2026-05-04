@@ -111,7 +111,9 @@ export default async function AdminPage() {
             <li key={u.id} className="flex items-center justify-between border-b border-zinc-100 py-2">
               <span>{u.nickname}</span>
               <span className="text-xs text-zinc-500">
-                {u.deletedAt ? new Date(u.deletedAt).toLocaleDateString('ko-KR') : '-'}
+                {u.deletedAt
+                  ? new Date(u.deletedAt).toLocaleDateString('ko-KR', { timeZone: 'Asia/Seoul' })
+                  : '-'}
               </span>
             </li>
           ))}

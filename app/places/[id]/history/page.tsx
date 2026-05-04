@@ -25,7 +25,8 @@ export default async function HistoryPage({ params }: { params: { id: string } }
             <li key={r.id} className="card text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-zinc-500">
-                  {new Date(r.createdAt).toLocaleString('ko-KR')} · {r.editor.nickname}
+                  {new Date(r.createdAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })} ·{' '}
+                  {r.editor.nickname}
                 </span>
                 {i === 0 ? (
                   <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] text-accent">
